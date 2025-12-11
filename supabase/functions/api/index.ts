@@ -9,7 +9,7 @@ import { createClient } from "jsr:@supabase/supabase-js";
 // supabase 통신 인스턴스 생성
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
 );
 
 const app = new Hono().basePath("/api");
@@ -20,7 +20,7 @@ app.use(
   cors({
     origin: "*", // 실제 배포 시에는 프론트엔드 도메인으로 변경 권장
     allowHeaders: ["authorization", "x-client-info", "apikey", "content-type"],
-  })
+  }),
 );
 
 // ✔ OPTIONS 직접 처리 (Preflight 처리 필수!)
@@ -44,23 +44,24 @@ interface CurriculumResponse {
 }
 
 app.get("/wordbooks/default", async (c) => {
-  // 1번 커리큘럼에 포함된 단어장 리스트 반환
+  // 1. 카테고리가 'HOME'인 커리큘럼의 ID 조회
   const { data: curriculum_data, error: curriculum_error } = await supabase
     .from("curriculum")
     .select("id")
-    .single(); // 결과가 딱 1개일 때 사용 (0개거나 2개 이상이면 에러 발생)
+    .eq("category", "HOME") // ⭐ [추가됨] category가 'HOME'인 것만 필터링
+    .maybeSingle(); // ⭐ single() 대신 maybeSingle() 사용 (데이터 없으면 null 반환)
 
-  // 예외처리
+  // DB 에러 처리
   if (curriculum_error) {
     return c.json({ error: curriculum_error.message }, 500);
   }
 
-  // curriculum data 가 없을 경우 예외 처리
-  if (!curriculum_data.id) {
-    return c.json([]);
+  // 'HOME' 커리큘럼이 없는 경우 처리
+  if (!curriculum_data) {
+    return c.json({ error: "Default curriculum not found" }, 404);
   }
 
-  const curriuclum_id = curriculum_data?.id;
+  const curriculum_id = curriculum_data.id;
 
   const { data, error } = await supabase
     .from("curriculum_wordbook")
@@ -72,9 +73,9 @@ app.get("/wordbooks/default", async (c) => {
         title,
         description
       )
-    `
+    `,
     )
-    .eq("curriculum_id", curriuclum_id)
+    .eq("curriculum_id", curriculum_id)
     .order("order_index", { ascending: true })
     .overrideTypes<CurriculumResponse[], { merge: false }>();
 
