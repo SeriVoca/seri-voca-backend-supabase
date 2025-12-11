@@ -33,6 +33,16 @@ app.options("/*", (c) => {
   # /wordbooks/default
   # 전체 게시물 조회
 */
+
+interface CurriculumResponse {
+  order_index: number; // or any based on your DB
+  wordbook: {
+    id: number;
+    title: string;
+    description: string | null;
+  }; // ⭐ 배열[]이 아니라 단일 객체로 선언
+}
+
 app.get("/wordbooks/default", async (c) => {
   // 1번 커리큘럼에 포함된 단어장 리스트 반환
   const { data: curriculum_data, error: curriculum_error } = await supabase
@@ -65,14 +75,18 @@ app.get("/wordbooks/default", async (c) => {
     `
     )
     .eq("curriculum_id", curriuclum_id)
-    .order("order_index", { ascending: true });
+    .order("order_index", { ascending: true })
+    .overrideTypes<CurriculumResponse[], { merge: false }>();
 
   if (error) {
     return c.json({ error: error.message }, 500);
   }
 
+  // refine
   const result = data.map((row) => ({
-    wordbook: row.wordbook,
+    id: row.wordbook.id,
+    title: row.wordbook.title,
+    description: row.wordbook.description,
     order_index: row.order_index,
   }));
 
