@@ -104,7 +104,6 @@ interface MeaningRow {
   part_of_speech: string;
   meaning: string;
   order_index: number;
-  created_at: string;
 }
 
 interface WordRow {
@@ -132,7 +131,6 @@ app.get("/wordbook/:id", async (c) => {
           part_of_speech,
           meaning,
           order_index,
-          created_at
         )
       )
     `)
@@ -147,10 +145,14 @@ app.get("/wordbook/:id", async (c) => {
   const result = data.map((row) => ({
     id: row.word.id,
     en_text: row.word.en_text,
-    meanings: row.word.meaning.sort(
-      (a, b) => a.order_index - b.order_index,
-    ),
     order_index: row.order_index,
+    meanings: row.word.meaning
+      .sort((a, b) => a.order_index - b.order_index)
+      .map((m) => ({
+        part_of_speech: m.part_of_speech,
+        meaning: m.meaning,
+        order_index: m.order_index,
+      })),
   }));
 
   return c.json(result);
