@@ -130,7 +130,7 @@ app.get("/wordbook/:id", async (c) => {
         meaning (
           part_of_speech,
           meaning,
-          order_index,
+          order_index
         )
       )
     `)
