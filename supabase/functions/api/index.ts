@@ -94,5 +94,69 @@ app.get("/wordbooks/default", async (c) => {
   return c.json(result);
 });
 
+/*
+  # GET
+  # /wordbook/:id
+  # 단어장의 단어 조회
+*/
+
+interface MeaningRow {
+  part_of_speech: string;
+  meaning: string;
+  order_index: number;
+}
+
+interface WordRow {
+  id: string;
+  en_text: string;
+  meaning: MeaningRow[];
+}
+
+interface WordbookWordRow {
+  order_index: number;
+  word: WordRow;
+}
+
+app.get("/wordbook/:id", async (c) => {
+  const wordbook_id = c.req.param("id");
+
+  const { data, error } = await supabase
+    .from("wordbook_word")
+    .select(`
+      order_index,
+      word (
+        id,
+        en_text,
+        meaning (
+          part_of_speech,
+          meaning,
+          order_index
+        )
+      )
+    `)
+    .eq("wordbook_id", wordbook_id)
+    .order("order_index", { ascending: true })
+    .overrideTypes<WordbookWordRow[], { merge: false }>();
+
+  if (error) {
+    return c.json({ error: error.message }, 500);
+  }
+
+  const result = data.map((row) => ({
+    id: row.word.id,
+    en_text: row.word.en_text,
+    order_index: row.order_index,
+    meanings: row.word.meaning
+      .sort((a, b) => a.order_index - b.order_index)
+      .map((m) => ({
+        part_of_speech: m.part_of_speech,
+        meaning: m.meaning,
+        order_index: m.order_index,
+      })),
+  }));
+
+  return c.json(result);
+});
+
 // 런타임 환경에서 서빙
 Deno.serve(app.fetch);
