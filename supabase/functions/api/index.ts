@@ -5,6 +5,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createClient } from "supabase";
+import { wordbookRouter } from "@/routes/wordbook.ts";
 
 // supabase 통신 인스턴스 생성
 const supabase = createClient(
@@ -43,56 +44,8 @@ interface CurriculumResponse {
   }; // ⭐ 배열[]이 아니라 단일 객체로 선언
 }
 
-app.get("/wordbooks/default", async (c) => {
-  // 1. 카테고리가 'HOME'인 커리큘럼의 ID 조회
-  const { data: curriculum_data, error: curriculum_error } = await supabase
-    .from("curriculum")
-    .select("id")
-    .eq("category", "HOME") // ⭐ [추가됨] category가 'HOME'인 것만 필터링
-    .maybeSingle(); // ⭐ single() 대신 maybeSingle() 사용 (데이터 없으면 null 반환)
-
-  // DB 에러 처리
-  if (curriculum_error) {
-    return c.json({ error: curriculum_error.message }, 500);
-  }
-
-  // 'HOME' 커리큘럼이 없는 경우 처리
-  if (!curriculum_data) {
-    return c.json({ error: "Default curriculum not found" }, 404);
-  }
-
-  const curriculum_id = curriculum_data.id;
-
-  const { data, error } = await supabase
-    .from("curriculum_wordbook")
-    .select(
-      `
-      order_index,
-      wordbook (
-        id,
-        title,
-        description
-      )
-    `,
-    )
-    .eq("curriculum_id", curriculum_id)
-    .order("order_index", { ascending: true })
-    .overrideTypes<CurriculumResponse[], { merge: false }>();
-
-  if (error) {
-    return c.json({ error: error.message }, 500);
-  }
-
-  // refine
-  const result = data.map((row) => ({
-    id: row.wordbook.id,
-    title: row.wordbook.title,
-    description: row.wordbook.description,
-    order_index: row.order_index,
-  }));
-
-  return c.json(result);
-});
+// controller 등록
+app.route("wordbooks", wordbookRouter);
 
 /*
   # GET
