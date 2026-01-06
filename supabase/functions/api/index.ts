@@ -1,10 +1,10 @@
 // deno-lint-ignore-file
-// supabase/functions/api-server/index.ts
+// supabase/functions/api/index.ts
 
 // 1. Hono 프레임워크 가져오기 (Deno는 npm install 없이 URL로 가져옵니다)
-import { Hono } from "jsr:@hono/hono";
-import { cors } from "jsr:@hono/hono/cors";
-import { createClient } from "jsr:@supabase/supabase-js";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { createClient } from "supabase";
 
 // supabase 통신 인스턴스 생성
 const supabase = createClient(
