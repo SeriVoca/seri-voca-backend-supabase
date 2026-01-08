@@ -6,7 +6,7 @@ export const wordbookController = new Hono();
 /*
   # GET
   # /wordbook/:id
-  # 단어장의 단어 조회
+  # 단어장 id로 단어 조회
 */
 wordbookController.get("/:id", async (c) => {
   const wordbook_id = c.req.param("id");

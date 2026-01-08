@@ -5,7 +5,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createClient } from "supabase";
-import { wordbookRouter } from "@/routes/wordbook.ts";
+import { curriculumController } from "@/domains/curriculum/curriculum.controller.ts";
 import { wordbookController } from "@/domains/wordbook/wordbook.controller.ts";
 
 // supabase 통신 인스턴스 생성
@@ -31,8 +31,8 @@ app.options("/*", (c) => {
 });
 
 // controller 등록
-app.route("wordbooks", wordbookRouter);
-app.route("wordbook", wordbookController);
+app.route("curriculum", curriculumController);
+app.route("wordbooks", wordbookController);
 
 /*
   # GET
