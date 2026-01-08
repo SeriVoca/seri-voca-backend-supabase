@@ -31,7 +31,7 @@ app.options("/*", (c) => {
 });
 
 // controller 등록
-app.route("curriculum", curriculumController);
+app.route("curriculums", curriculumController);
 app.route("wordbooks", wordbookController);
 
 /*
