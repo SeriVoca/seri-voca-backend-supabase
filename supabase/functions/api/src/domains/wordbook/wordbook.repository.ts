@@ -1,15 +1,22 @@
 import { supabase } from "@/utils/supabase.ts";
-import { CurriculumWordbookRow } from "./wordbook.types.ts";
+import { WordbookWordWithDetailRow } from "./wordbook.types.ts";
 
-// 커리큘럼 id로 단어장 목록 조회
-export const findWordbooksByCurriculumId = async (curriculumId: number) => {
+// 단어장 id로 단어 조회
+export const findWordsByWordbookId = async (wordbookId: string) => {
   return await supabase
-    .from("curriculum_wordbook")
+    .from("wordbook_word")
     .select(`
       order_index,
-      wordbook (id, title, description)
-    `)
-    .eq("curriculum_id", curriculumId)
+      word (
+        id,
+        en_text,
+        meaning (
+          part_of_speech,
+          meaning,
+          order_index
+        )
+      )`)
+    .eq("wordbook_id", wordbookId)
     .order("order_index", { ascending: true })
-    .overrideTypes<CurriculumWordbookRow[], { merge: false }>();
+    .overrideTypes<WordbookWordWithDetailRow[], { merge: false }>();
 };
