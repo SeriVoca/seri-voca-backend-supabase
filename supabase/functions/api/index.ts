@@ -7,6 +7,7 @@ import { cors } from "hono/cors";
 import { createClient } from "supabase";
 import { curriculumController } from "@/domains/curriculum/curriculum.controller.ts";
 import { wordbookController } from "@/domains/wordbook/wordbook.controller.ts";
+import { userController } from "@/domains/user/user.controller.ts";
 
 // supabase 통신 인스턴스 생성
 const supabase = createClient(
@@ -33,54 +34,7 @@ app.options("/*", (c) => {
 // controller 등록
 app.route("curriculums", curriculumController);
 app.route("wordbooks", wordbookController);
-
-/*
-  # GET
-  # /user/profile
-  # profile image url, user name, email 조회
-*/
-
-app.get("/user/profile", async (c) => {
-  // Authorization 헤더에서 token 파싱
-  const authHeader = c.req.header("authorization");
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return c.json({ error: "authorization 헤더가 올바르지 않습니다." }, 401);
-  }
-
-  const token = authHeader.replace("Bearer ", "");
-
-  // token 으로 user 조회
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    token,
-  ); // supabase 로 user 확인
-
-  if (authError || !user) {
-    return c.json({ error: "access token 이 유효하지 않습니다." }, 401);
-  }
-
-  // user table 에서 프로필 정보 조회
-  const { data: profile, error: profileError } = await supabase
-    .from("user")
-    .select(`
-      email,
-      nickname,
-      avatar_url
-      `)
-    .eq("id", user.id)
-    .single();
-
-  if (profileError) {
-    return c.json({ error: profileError.message }, 500);
-  }
-
-  // 응답
-  return c.json({
-    email: profile.email,
-    name: profile.nickname,
-    profile_image_url: profile.avatar_url,
-  });
-});
+app.route("user", userController);
 
 // 런타임 환경에서 서빙
 Deno.serve(app.fetch);
