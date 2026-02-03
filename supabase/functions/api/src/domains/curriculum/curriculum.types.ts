@@ -1,23 +1,53 @@
-import { WordbookRow } from "../wordbook/wordbook.types.ts";
+import { WordbookType } from "../wordbook/wordbook.types.ts";
+
+// DB Layer
+export type CurriculumCategory = "HOME";
+
+export interface CurriculumRow {
+  id: string;
+  title: string;
+  description: string | null;
+  created_at: string;
+  category: CurriculumCategory | null; // ERD 상 NULL 가능
+}
+
+export interface CurriculumWordbookRow {
+  id: string;
+  curriculum_id: string;
+  wordbook_id: string;
+  order_index: number;
+  created_at: string;
+}
 
 // Query Layer
 export interface CurriculumWordbookWithBookRow {
   order_index: number;
-  wordbook: Pick<WordbookRow, "id" | "title" | "description">;
+  wordbook: {
+    id: string;
+    title: string;
+    description: string | null;
+    type: WordbookType; // wordbook.type enum (SYSTEM | USER)
+  } | null;
 }
 
 // Domain Layer
 export interface CurriculumWordbook {
   orderIndex: number;
-  wordbookId: string;
-  title: string;
-  description: string | null;
+  wordbook: {
+    id: string;
+    title: string;
+    description: string | null;
+    type: WordbookType;
+  };
 }
 
 // DTO Layer
 export interface CurriculumWordbookDTO {
   order_index: number;
-  id: string;
-  title: string;
-  description: string | null;
+  wordbook: {
+    id: string;
+    title: string;
+    description: string | null;
+    type: WordbookType;
+  };
 }
