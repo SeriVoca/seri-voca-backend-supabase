@@ -37,7 +37,7 @@ export interface WordbookWordRow {
 export interface SystemWordbookItemRow {
   source: "SYSTEM";
   order_index: number;
-  word: SystemWordWithMeaningsRow | null;
+  system_word: SystemWordWithMeaningsRow | null;
 }
 
 /**

@@ -20,14 +20,14 @@ export interface CurriculumWordbookRow {
 }
 
 // Query Layer
-export interface CurriculumWordbookWithBookRow {
+export interface CurriculumWordbookWithWordbookRow {
   order_index: number;
   wordbook: {
     id: string;
     title: string;
     description: string | null;
     type: WordbookType; // wordbook.type enum (SYSTEM | USER)
-  } | null;
+  };
 }
 
 // Domain Layer

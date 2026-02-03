@@ -8,6 +8,7 @@ export const curriculumController = new Hono();
   # /curriculum/default
   # 기본 커리큘럼의 단어장 목록 조회
 */
+
 curriculumController.get("/default", async (c) => {
   try {
     const result = await curriculumService.getDefaultWordbooks();
