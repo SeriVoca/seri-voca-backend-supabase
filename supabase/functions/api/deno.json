@@ -7,6 +7,6 @@
   },
   "tasks": {
     "deploy:dev": "supabase functions deploy api --project-ref liwnjwavahjcdybgshyq --no-verify-jwt",
-    "deploy:prod": "supabase functions deploy api --project-ref ayyryvbvwkrzkzazwlfs --verify-jwt"
+    "deploy:prod": "supabase functions deploy api --project-ref ayyryvbvwkrzkzazwlfs --no-verify-jwt"
   }
 }
