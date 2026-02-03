@@ -4,5 +4,9 @@
     "hono": "jsr:@hono/hono",
     "hono/cors": "jsr:@hono/hono/cors",
     "supabase": "jsr:@supabase/supabase-js"
+  },
+  "tasks": {
+    "deploy:dev": "supabase functions deploy api --project-ref liwnjwavahjcdybgshyq --no-verify-jwt",
+    "deploy:prod": "supabase functions deploy api --project-ref ayyryvbvwkrzkzazwlfs --no-verify-jwt"
   }
 }
