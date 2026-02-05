@@ -2,6 +2,8 @@ import * as wordbookRepo from "../wordbook/wordbook.repository.ts";
 import {
   SystemWordbookItemRow,
   UserWordbookItemRow,
+  WordbookDTO,
+  WordbookRow,
   WordbookWord,
   WordbookWordDTO,
 } from "./wordbook.types.ts";
@@ -74,6 +76,15 @@ export class UserWordbookMapper {
         })),
     };
   }
+
+  static mapWordbookRowToWordbookDTO(row: WordbookRow): WordbookDTO {
+    return {
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      type: row.type,
+    };
+  }
 }
 
 // 단어장 id로 단어 조회
@@ -99,4 +110,20 @@ export const getWordsInWordbook = async (
   } else {
     throw new Error("올바르지 않은 단어장 유형입니다.");
   }
+};
+
+// 사용자 단어장 생성
+export const createUserWordbook = async (
+  user_id: string,
+  title: string,
+  description: string | null,
+): Promise<WordbookDTO> => {
+  const wordbook = await wordbookRepo.createWordbook(
+    user_id,
+    title,
+    description,
+    "USER",
+  );
+
+  return UserWordbookMapper.mapWordbookRowToWordbookDTO(wordbook);
 };
