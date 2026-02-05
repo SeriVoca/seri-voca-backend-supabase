@@ -1,19 +1,57 @@
 export type PartOfSpeech = string;
+export type WordSource = "SYSTEM" | "USER";
 
 // DB Layer
-export interface MeaningRow {
+export interface SystemWordRow {
   id: string;
-  word_id: string;
-  part_of_speech: string;
+  en_text: string;
+  created_at: string;
+}
+
+export interface UserWordRow {
+  id: string;
+  wordbook_id: string;
+  en_text: string;
+  order_index: number;
+  created_at: string;
+}
+
+export interface SystemMeaningRow {
+  id: string;
+  word_id: string; // references system_word.id
+  part_of_speech: PartOfSpeech;
+  meaning: string;
+  order_index: number;
+  created_at: string;
+}
+
+export interface UserMeaningRow {
+  id: string;
+  word_id: string; // references user_word.id
+  part_of_speech: PartOfSpeech;
   meaning: string;
   order_index: number;
   created_at: string;
 }
 
 // Query Layer
-export interface WordWithMeaningsRow {
+export interface SystemWordWithMeaningsRow extends SystemWordRow {
+  meanings: SystemMeaningRow[];
+}
+
+export interface UserWordWithMeaningsRow extends UserWordRow {
+  meanings: UserMeaningRow[];
+}
+
+// DTO Layer
+export interface MeaningDTO {
+  part_of_speech: PartOfSpeech;
+  meaning: string;
+  order_index: number;
+}
+
+export interface WordDTO {
   id: string;
   en_text: string;
-  created_at: string;
-  meaning: MeaningRow[];
+  meanings: MeaningDTO[];
 }
