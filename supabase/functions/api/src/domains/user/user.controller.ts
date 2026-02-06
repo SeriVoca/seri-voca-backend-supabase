@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import * as userService from "./user.service.ts";
+import { requireAuth } from "../../auth/auth.service.ts";
 
 export const userController = new Hono();
 
@@ -9,22 +10,14 @@ export const userController = new Hono();
   # profile image url, user name, email 조회
 */
 
-userController.get("/profile", async (c) => {
-  const authHeader = c.req.header("authorization");
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return c.json({ error: "authorization 헤더가 올바르지 않습니다." }, 401);
-  }
-
-  const token = authHeader.replace("Bearer ", "");
+userController.get("/profile", requireAuth, async (c) => {
+  // requireAuth에서 인증 및 userId 추출
+  const userId = (c as any).get("userId") as string;
 
   try {
-    const profile = await userService.getUserProfile(token);
+    const profile = await userService.getUserProfile(userId);
     return c.json(profile);
-  } catch (error: any) {
-    if (error.message === "UNAUTHORIZATION") {
-      return c.json({ error: "access token 이 유효하지 않습니다." }, 404);
-    }
-    return c.json({ error: error.message }, 500);
+  } catch (error) {
+    return c.json({ error: "INTERNAL_SERVER_ERROR" }, 500);
   }
 });

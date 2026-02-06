@@ -1,7 +1,9 @@
 import { supabase } from "../../utils/supabase.ts";
 import { UserProfileRow } from "./user.types.ts";
 
-export const findProfileById = async (userId: string): Promise<UserProfileRow> => {
+export const findProfileById = async (
+  userId: string,
+): Promise<UserProfileRow | null> => {
   const { data, error } = await supabase
     .from("user")
     .select(`id, email, nickname, avatar_url`)
@@ -10,8 +12,6 @@ export const findProfileById = async (userId: string): Promise<UserProfileRow> =
     .overrideTypes<UserProfileRow>();
 
   if (error) throw error;
-
-  console.log("[REPO] data: ", data);
 
   return data;
 };
