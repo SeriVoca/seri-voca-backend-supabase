@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import * as wordbookService from "./wordbook.service.ts";
 import { supabase } from "../../utils/supabase.ts";
+import { requireAuth } from "../../auth/auth.service.ts";
 
 export const wordbookController = new Hono();
 
@@ -24,20 +25,10 @@ wordbookController.get("/:id", async (c) => {
   # /wordbooks
   # 사용자 단어장 생성
 */
-wordbookController.post("/", async (c) => {
-  // 사용자 ID 확인
-  const authHeader = c.req.header("authorization");
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return c.json({ error: "authorization 헤더가 올바르지 않습니다. " }, 401);
-  }
-  const token = authHeader.replace("Bearer ", "");
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    token,
-  );
-  if (authError || !user) throw new Error("UNAUTHORIZATION");
-
+wordbookController.post("/", requireAuth, async (c) => {
   // 서비스 로직 호출
-  const user_id = user.id;
+  const user_id = (c as any).get("userId");
+
   const body = await c.req.json<{
     title: string;
     description: string | null;
