@@ -2,6 +2,8 @@ import { supabase } from "@/utils/supabase.ts";
 import {
   SystemWordbookItemRow,
   UserWordbookItemRow,
+  WordbookRow,
+  WordbookType,
 } from "./wordbook.types.ts";
 import { WordSource } from "../word/word.types.ts";
 
@@ -35,20 +37,22 @@ export const findSystemWordsByWordbookId = async (
   // 에러 없이 깔끔하게 가공하기
   return (data || []).map((row) => {
     // system_word가 배열로 올 경우 첫 번째 요소를 선택
-    const rawWord = Array.isArray(row.system_word) 
-      ? row.system_word[0] 
+    const rawWord = Array.isArray(row.system_word)
+      ? row.system_word[0]
       : row.system_word;
 
     return {
       source: "SYSTEM",
       order_index: row.order_index,
-      system_word: rawWord ? {
-        id: rawWord.id,
-        en_text: rawWord.en_text,
-        created_at: rawWord.created_at,
-        // system_meaning을 인터페이스에서 기대하는 meanings로 이름 변경
-        meanings: rawWord.system_meaning 
-      } : null
+      system_word: rawWord
+        ? {
+          id: rawWord.id,
+          en_text: rawWord.en_text,
+          created_at: rawWord.created_at,
+          // system_meaning을 인터페이스에서 기대하는 meanings로 이름 변경
+          meanings: rawWord.system_meaning,
+        }
+        : null,
     };
   }) as SystemWordbookItemRow[];
 };
@@ -92,4 +96,26 @@ export const getSourceByWordbookId = async (
   if (error) throw error;
 
   return data.type;
+};
+
+export const createWordbook = async (
+  userId: string,
+  title: string,
+  description: string | null,
+  type: WordbookType,
+): Promise<WordbookRow> => {
+  const { data, error } = await supabase
+    .from("wordbook")
+    .insert({
+      owner_id: userId,
+      title: title,
+      description: description,
+      type: type,
+    })
+    .select()
+    .single<WordbookRow>();
+
+  if (error) throw error;
+
+  return data;
 };

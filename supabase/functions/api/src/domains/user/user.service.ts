@@ -1,5 +1,4 @@
 import * as userRepository from "./user.repository.ts";
-import { supabase } from "../../utils/supabase.ts";
 import { UserProfile, UserProfileDTO, UserProfileRow } from "./user.types.ts";
 
 export class UserMapper {
@@ -22,20 +21,11 @@ export class UserMapper {
   }
 }
 
-export const getUserProfile = async (token: string) => {
-  // 1. 인증 확인 (비대칭키 방식에서도 보안을 위해 getUser 권장)
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    token,
-  );
+export const getUserProfile = async (
+  userId: string,
+): Promise<UserProfile | null> => {
+  const profile = await userRepository.findProfileById(userId);
+  if (!profile) return null;
 
-  if (authError || !user) {
-    throw new Error("UNAUTHORIZATION");
-  }
-
-  // 2. 프로필 조회
-  const profile = await userRepository
-    .findProfileById(user.id);
-
-  // 3. 도메인 타입으로 변환 (FE가 쓰기 좋은 형태로 가공)
   return UserMapper.toDTO(UserMapper.toDomain(profile));
 };
