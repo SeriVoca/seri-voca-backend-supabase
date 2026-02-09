@@ -1,5 +1,4 @@
 import * as userRepository from "./user.repository.ts";
-import { supabase } from "../../utils/supabase.ts";
 import { UserProfile, UserProfileDTO, UserProfileRow } from "./user.types.ts";
 
 export class UserMapper {
