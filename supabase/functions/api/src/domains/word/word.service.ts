@@ -33,6 +33,7 @@ export const createUserWordWithMeanings = async (
   enText: string,
   meanings: CreateUserMeaningInput[],
 ): Promise<WordDTO> => {
+  // TODO: 실패시 롤백하여 원자성 보장
   const userWord = await wordRepo.createUserWord(wordbookId, enText);
   const userMeanings = meanings.length
     ? await wordRepo.createUserMeanings(userWord.id, meanings)
