@@ -119,3 +119,35 @@ export const createWordbook = async (
 
   return data;
 };
+
+/*
+  # 사용자 단어장 삭제
+
+  > 논의
+   - cascade 설정 조정하기
+   - soft delete 고려하기
+
+  > AI prompting
+   - types
+   - DB schema
+   - code conventions
+    - query
+    - exception handling
+    - return type
+*/
+
+export const deleteUserWordbook = async (
+  userId: string,
+  wordbookId: string,
+) => {
+  const { data, error } = await supabase
+    .from("wordbook")
+    .delete()
+    .eq("id", wordbookId)
+    .eq("owner_id", userId)
+    .select("id");
+
+  if (error) throw error;
+
+  return data;
+};
