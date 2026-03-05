@@ -60,14 +60,13 @@ wordbookController.post("/", requireAuth, async (c) => {
 */
 
 wordbookController.delete("/:wordbookId", requireAuth, async (c) => {
-  const user_id = (c as any).get("userId") as string;
+  const userId = (c as any).get("userId") as string;
+  const wordbookId = c.req.param("wordbookId");
 
   try {
-    // service 호출 - user_id 전달
-    // repository 에게 삭제 요청
-    // 해당 wordbook 이 요청한 user 가 게시한 것이 맞는지 확인 필요
+    await wordbookService.deleteUserWordbook(userId, wordbookId);
     return c.json("ok");
-  } catch (_error: unknown) {
-    return c.json({ error: "INTERNAL_SERVER_ERROR" }, 500);
+  } catch (error: unknown) {
+    return c.json({ error: error }, 500);
   }
 });

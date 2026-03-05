@@ -147,7 +147,13 @@ export const deleteUserWordbook = async (
     .eq("owner_id", userId)
     .select("id");
 
+  // 삭제 실패 했을 때
   if (error) throw error;
 
-  return data;
+  // 삭제된 row 가 없을 때
+  if (!data || data.length === 0) {
+    throw new Error("Wordbook not found or not authorized");
+  }
+
+  return true;
 };
