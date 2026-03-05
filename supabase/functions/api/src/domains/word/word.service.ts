@@ -1,7 +1,7 @@
 import * as wordRepo from "./word.repository.ts";
 import {
-  CreateUserMeaningInput,
   MeaningDTO,
+  UserMeaningInput,
   UserMeaningRow,
   UserWordRow,
   WordDTO,
@@ -31,7 +31,7 @@ export const mapUserWordRowsToWordDTO = (
 export const createUserWordWithMeanings = async (
   wordbookId: string,
   enText: string,
-  meanings: CreateUserMeaningInput[],
+  meanings: UserMeaningInput[],
 ): Promise<WordDTO> => {
   // TODO: 실패시 롤백하여 원자성 보장
   const userWord = await wordRepo.createUserWord(wordbookId, enText);

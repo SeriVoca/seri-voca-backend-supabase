@@ -3,7 +3,7 @@ import * as wordbookService from "./wordbook.service.ts";
 import * as wordService from "../word/word.service.ts";
 import { supabase } from "../../utils/supabase.ts";
 import { requireAuth } from "../../auth/auth.service.ts";
-import { CreateUserMeaningInput } from "../word/word.types.ts";
+import { UserMeaningInput } from "../word/word.types.ts";
 
 export const wordbookController = new Hono();
 
@@ -66,7 +66,7 @@ wordbookController.post("/:wordbookId/words/user", requireAuth, async (c) => {
 
   let body: {
     enText?: string;
-    meanings?: CreateUserMeaningInput[];
+    meanings?: UserMeaningInput[];
   };
 
   try {

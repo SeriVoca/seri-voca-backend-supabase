@@ -1,9 +1,5 @@
 import { supabase } from "../../utils/supabase.ts";
-import {
-  CreateUserMeaningInput,
-  UserMeaningRow,
-  UserWordRow,
-} from "./word.types.ts";
+import { UserMeaningInput, UserMeaningRow, UserWordRow } from "./word.types.ts";
 
 export const createUserWord = async (
   wordbookId: string,
@@ -24,7 +20,7 @@ export const createUserWord = async (
 
 export const createUserMeanings = async (
   wordId: string,
-  inputs: CreateUserMeaningInput[],
+  inputs: UserMeaningInput[],
 ): Promise<UserMeaningRow[]> => {
   const payload = inputs.map((r) => ({
     word_id: wordId,

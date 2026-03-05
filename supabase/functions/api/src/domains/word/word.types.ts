@@ -64,7 +64,7 @@ export interface WordDTO {
   meanings: MeaningDTO[];
 }
 
-export type CreateUserMeaningInput = {
+export type UserMeaningInput = {
   partOfSpeech: PartOfSpeech;
   meaning: string;
 };
