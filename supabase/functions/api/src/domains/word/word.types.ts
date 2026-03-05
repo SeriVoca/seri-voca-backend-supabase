@@ -1,4 +1,12 @@
-export type PartOfSpeech = string;
+export type PartOfSpeech =
+  | "NOUN"
+  | "PRONOUN"
+  | "VERB"
+  | "ADJECTIVE"
+  | "ADVERB"
+  | "PREPOSITION"
+  | "CONJUNCTION"
+  | "INTERJECTION";
 export type WordSource = "SYSTEM" | "USER";
 
 // DB Layer
@@ -55,3 +63,8 @@ export interface WordDTO {
   en_text: string;
   meanings: MeaningDTO[];
 }
+
+export type CreateUserMeaningInput = {
+  partOfSpeech: PartOfSpeech;
+  meaning: string;
+};
