@@ -38,3 +38,22 @@ export const createUserMeanings = async (
   if (error) throw error;
   return data;
 };
+export const updateUserWord = async (
+  wordId: string,
+  wordbookId: string,
+  enText: string,
+): Promise<UserWordRow> => {
+  const { data, error } = await supabase
+    .from("user_word")
+    .update({
+      en_text: enText,
+    })
+    .eq("id", wordId)
+    .eq("wordbook_id", wordbookId)
+    .select()
+    .single<UserWordRow>();
+
+  if (error) throw error;
+  return data;
+};
+
