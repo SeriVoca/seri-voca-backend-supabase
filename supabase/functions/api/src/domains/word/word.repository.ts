@@ -89,3 +89,13 @@ export const updateUserWord = async (
   return data;
 };
 
+export const deleteUserMeanings = async (
+  wordId: string,
+): Promise<void> => {
+  const { error } = await supabase
+    .from("user_meaning")
+    .delete()
+    .eq("word_id", wordId);
+
+  if (error) throw error;
+};
