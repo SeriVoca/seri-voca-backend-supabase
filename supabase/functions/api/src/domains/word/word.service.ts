@@ -35,9 +35,31 @@ export const createUserWordWithMeanings = async (
 ): Promise<WordDTO> => {
   // TODO: 실패시 롤백하여 원자성 보장
   const userWord = await wordRepo.createUserWord(wordbookId, enText);
-  const userMeanings = meanings.length
-    ? await wordRepo.createUserMeanings(userWord.id, meanings)
-    : [];
+  const userMeanings = await wordRepo.createUserMeanings(userWord.id, meanings);
+
+  return mapUserWordRowsToWordDTO(userWord, userMeanings);
+};
+
+// 사용자 단어 수정
+export const updateUserWordWithMeanings = async (
+  wordbookId: string,
+  wordId: string,
+  enText?: string,
+  meanings?: UserMeaningInput[],
+): Promise<WordDTO> => {
+  // 영어 수정 시 update (cascade 방지)
+  if (enText !== undefined) {
+    await wordRepo.updateUserWord(wordId, wordbookId, enText);
+  }
+  // 의미 수정 시 replace (delete -> create)
+  if (meanings !== undefined) {
+    await wordRepo.deleteUserMeanings(wordId);
+    await wordRepo.createUserMeanings(wordId, meanings);
+  }
+
+  // 조회
+  const userWord = await wordRepo.getUserWord(wordId);
+  const userMeanings = await wordRepo.getUserMeanings(wordId);
 
   return mapUserWordRowsToWordDTO(userWord, userMeanings);
 };
