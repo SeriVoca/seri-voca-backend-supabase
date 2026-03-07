@@ -38,6 +38,38 @@ export const createUserMeanings = async (
   if (error) throw error;
   return data;
 };
+
+/**
+ * 논의: get은 wordbookId 검증 없이 조회,
+ * update, delete는 wordbookId 검증
+ */
+export const getUserWord = async (
+  wordId: string,
+): Promise<UserWordRow> => {
+  const { data, error } = await supabase
+    .from("user_word")
+    .select()
+    .eq("id", wordId)
+    .single<UserWordRow>();
+
+  if (error) throw error;
+  return data;
+};
+
+export const getUserMeanings = async (
+  wordId: string,
+): Promise<UserMeaningRow[]> => {
+  const { data, error } = await supabase
+    .from("user_meaning")
+    .select()
+    .eq("word_id", wordId)
+    .order("order_index", { ascending: true })
+    .overrideTypes<UserMeaningRow[], { merge: false }>();
+
+  if (error) throw error;
+  return data;
+};
+
 export const updateUserWord = async (
   wordId: string,
   wordbookId: string,
