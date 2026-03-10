@@ -120,22 +120,7 @@ export const createWordbook = async (
   return data;
 };
 
-/*
-  # 사용자 단어장 삭제
-
-  > 논의
-   - cascade 설정 조정하기
-   - soft delete 고려하기
-
-  > AI prompting
-   - types
-   - DB schema
-   - code conventions
-    - query
-    - exception handling
-    - return type
-*/
-
+// 사용자 단어장 삭제
 export const deleteUserWordbook = async (
   userId: string,
   wordbookId: string,
@@ -145,6 +130,7 @@ export const deleteUserWordbook = async (
     .delete()
     .eq("id", wordbookId)
     .eq("owner_id", userId)
+    .eq("type", "USER")
     .select("id");
 
   // 삭제 실패 했을 때
