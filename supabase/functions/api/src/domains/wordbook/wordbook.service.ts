@@ -127,3 +127,15 @@ export const createUserWordbook = async (
 
   return UserWordbookMapper.mapWordbookRowToWordbookDTO(wordbook);
 };
+
+// 사용자 단어장 삭제
+export const deleteUserWordbook = async (
+  userId: string,
+  wordbookId: string,
+): Promise<void> => {
+  try {
+    await wordbookRepo.deleteUserWordbook(userId, wordbookId);
+  } catch (error: unknown) {
+    throw error;
+  }
+};

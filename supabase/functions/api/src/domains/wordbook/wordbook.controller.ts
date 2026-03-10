@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import * as wordbookService from "./wordbook.service.ts";
 import * as wordService from "../word/word.service.ts";
-import { supabase } from "../../utils/supabase.ts";
 import { requireAuth } from "../../auth/auth.service.ts";
 import { CreateUserMeaningInput } from "../word/word.types.ts";
+import { PostgrestError } from "supabase";
 
 export const wordbookController = new Hono();
 
@@ -113,5 +113,25 @@ wordbookController.post("/:wordbookId/words/user", requireAuth, async (c) => {
     return c.json(result, 201);
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
+  }
+});
+
+/*
+  # DELETE
+  # /wordbooks/:id
+  # 사용자 단어장 삭제
+*/
+
+wordbookController.delete("/:wordbookId", requireAuth, async (c) => {
+  const userId = (c as any).get("userId") as string;
+  const wordbookId = c.req.param("wordbookId");
+
+  try {
+    await wordbookService.deleteUserWordbook(userId, wordbookId);
+    return c.json("ok");
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return c.json({ error: error.message }, 500);
+    } else return c.json({ error: "알 수 없는 오류가 발생했습니다." }, 500);
   }
 });
