@@ -3,6 +3,7 @@ import * as wordbookService from "./wordbook.service.ts";
 import * as wordService from "../word/word.service.ts";
 import { requireAuth } from "../../auth/auth.service.ts";
 import { CreateUserMeaningInput } from "../word/word.types.ts";
+import { PostgrestError } from "supabase";
 
 export const wordbookController = new Hono();
 
@@ -129,6 +130,8 @@ wordbookController.delete("/:wordbookId", requireAuth, async (c) => {
     await wordbookService.deleteUserWordbook(userId, wordbookId);
     return c.json("ok");
   } catch (error: unknown) {
-    return c.json({ error: error }, 500);
+    if (error instanceof Error) {
+      return c.json({ error: error.message }, 500);
+    } else return c.json({ error: "알 수 없는 오류가 발생했습니다." }, 500);
   }
 });
