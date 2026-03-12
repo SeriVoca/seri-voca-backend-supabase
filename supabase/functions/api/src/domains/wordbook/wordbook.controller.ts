@@ -177,12 +177,20 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
   }
 
   try {
-    const result = await wordService.updateUserWordWithMeanings(
-      wordbookId,
-      wordId,
-      enText?.trim(),
-      meanings,
-    );
+    if (enText !== undefined) {
+      await wordService.updateUserWord(
+        wordbookId,
+        wordId,
+        enText.trim(),
+      );
+    }
+    if (meanings !== undefined) {
+      await wordService.updateUserMeanings(
+        wordId,
+        meanings,
+      );
+    }
+    const result = await wordService.getUserWordWithMeanings(wordId);
 
     return c.json(result, 200);
   } catch (error: any) {
