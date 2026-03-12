@@ -119,3 +119,35 @@ export const createWordbook = async (
 
   return data;
 };
+
+// 사용자 단어장 삭제
+export const deleteUserWordbook = async (
+  userId: string,
+  wordbookId: string,
+) => {
+  console.log("[params] ", wordbookId, userId);
+  const { data, error } = await supabase
+    .from("wordbook")
+    .delete()
+    .eq("id", wordbookId)
+    .eq("owner_id", userId)
+    .eq("type", "USER")
+    .select("id");
+
+  // 삭제 실패 했을 때
+  if (error) {
+    console.error(
+      "[repo] query 수행 도중 error 가 발생했습니다",
+      error.message,
+    );
+    throw new Error(error.message);
+  }
+
+  // 삭제된 row 가 없을 때
+  if (!data || data.length === 0) {
+    console.error("[repo] delete query 수행 결과가 없습니다.");
+    throw new Error("Wordbook not found or not authorized");
+  }
+
+  return true;
+};

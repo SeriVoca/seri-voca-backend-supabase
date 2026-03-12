@@ -197,3 +197,23 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
     return c.json({ error: error.message ?? "INTERNAL_SERVER_ERROR" }, 500);
   }
 });
+
+/*
+  # DELETE
+  # /wordbooks/:id
+  # 사용자 단어장 삭제
+*/
+
+wordbookController.delete("/:wordbookId", requireAuth, async (c) => {
+  const userId = (c as any).get("userId") as string;
+  const wordbookId = c.req.param("wordbookId");
+
+  try {
+    await wordbookService.deleteUserWordbook(userId, wordbookId);
+    return c.json("ok");
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return c.json({ error: error.message }, 500);
+    } else return c.json({ error: "알 수 없는 오류가 발생했습니다." }, 500);
+  }
+});
