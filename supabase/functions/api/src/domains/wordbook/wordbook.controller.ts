@@ -200,6 +200,49 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
 
 /*
   # DELETE
+  # /wordbooks/:wordbookId/words/user
+  # 사용자 단어 삭제
+ */
+wordbookController.delete("/:wordbookId/words/user", requireAuth, async (c) => {
+  const wordbookId = c.req.param("wordbookId");
+
+  let body: {
+    wordId: string;
+  };
+
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "INVALID_JSON" }, 400);
+  }
+
+  const { wordId } = body;
+
+  // ===== 기본 검증 =====
+
+  // wordId, wordbookId 검증
+  if (!isUuid(wordId)) {
+    return c.json({ error: "INVALID_WORD_ID" }, 400);
+  }
+  if (!isUuid(wordbookId)) {
+    return c.json({ error: "INVALID_WORDBOOK_ID" }, 400);
+  }
+
+  try {
+    await wordService.deleteUserWordWithMeanings(wordId, wordbookId);
+    return c.body(null, 204);
+  } catch (error: any) {
+    // TODO: 논의 - 커스텀 에러 클래스
+    console.error("delete error:", error);
+    if (error.message === "USER_WORD_NOT_FOUND") {
+      return c.json({ error: error.message }, 404);
+    }
+    return c.json({ error: error.message ?? "INTERNAL_SERVER_ERROR" }, 500);
+  }
+});
+
+/*
+  # DELETE
   # /wordbooks/:id
   # 사용자 단어장 삭제
 */
