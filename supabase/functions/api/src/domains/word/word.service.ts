@@ -90,3 +90,11 @@ export const updateUserMeanings = async (
 
   return mapUserMeaningRowsToMeaningDTO(userMeanings);
 };
+
+// 사용자 단어 삭제
+export const deleteUserWordWithMeanings = async (
+  wordId: string,
+  wordbookId: string,
+): Promise<void> => {
+  await wordRepo.deleteUserWordWithMeanings(wordId, wordbookId);
+};
