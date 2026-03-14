@@ -7,6 +7,18 @@ export type PartOfSpeech =
   | "PREPOSITION"
   | "CONJUNCTION"
   | "INTERJECTION";
+
+export const PART_OF_SPEECH_VALUES: PartOfSpeech[] = [
+  "NOUN",
+  "PRONOUN",
+  "VERB",
+  "ADJECTIVE",
+  "ADVERB",
+  "PREPOSITION",
+  "CONJUNCTION",
+  "INTERJECTION",
+];
+
 export type WordSource = "SYSTEM" | "USER";
 
 // DB Layer
@@ -64,7 +76,7 @@ export interface WordDTO {
   meanings: MeaningDTO[];
 }
 
-export type CreateUserMeaningInput = {
+export type UserMeaningInput = {
   partOfSpeech: PartOfSpeech;
   meaning: string;
 };

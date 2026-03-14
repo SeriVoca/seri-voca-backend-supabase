@@ -2,8 +2,12 @@ import { Hono } from "hono";
 import * as wordbookService from "./wordbook.service.ts";
 import * as wordService from "../word/word.service.ts";
 import { requireAuth } from "../../auth/auth.service.ts";
-import { CreateUserMeaningInput } from "../word/word.types.ts";
-import { PostgrestError } from "supabase";
+import { UserMeaningInput } from "../word/word.types.ts";
+import {
+  isNonEmptyString,
+  isUuid,
+  isValidMeaningInput,
+} from "../../utils/validators.ts";
 
 export const wordbookController = new Hono();
 
@@ -65,8 +69,8 @@ wordbookController.post("/:wordbookId/words/user", requireAuth, async (c) => {
   const wordbookId = c.req.param("wordbookId");
 
   let body: {
-    enText?: string;
-    meanings?: CreateUserMeaningInput[];
+    enText: string;
+    meanings: UserMeaningInput[];
   };
 
   try {
@@ -113,6 +117,84 @@ wordbookController.post("/:wordbookId/words/user", requireAuth, async (c) => {
     return c.json(result, 201);
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
+  }
+});
+
+/**
+  # PATCH
+  # /wordbooks/:wordbookId/words/user
+  # 사용자 단어 수정
+ */
+wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
+  const wordbookId = c.req.param("wordbookId");
+
+  let body: {
+    wordId: string;
+    enText?: string;
+    meanings?: UserMeaningInput[];
+  };
+
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "INVALID_JSON" }, 400);
+  }
+
+  const { wordId, enText, meanings } = body;
+
+  // ===== 기본 검증 =====
+
+  // 1. wordId, wordbookId 검증
+  if (!isUuid(wordId)) {
+    return c.json({ error: "INVALID_WORD_ID" }, 400);
+  }
+  if (!isUuid(wordbookId)) {
+    return c.json({ error: "INVALID_WORDBOOK_ID" }, 400);
+  }
+
+  // 2. 수정할 값이 하나도 없는 경우 차단
+  if (enText === undefined && meanings === undefined) {
+    return c.json({ error: "EMPTY_PATCH_BODY" }, 400);
+  }
+
+  // 3. enText 검증
+  if (enText !== undefined && !isNonEmptyString(enText)) {
+    return c.json({ error: "INVALID_EN_TEXT" }, 400);
+  }
+
+  // 4. meanings 검증
+  if (meanings !== undefined) {
+    if (!Array.isArray(meanings)) {
+      return c.json({ error: "INVALID_MEANINGS_TYPE" }, 400);
+    }
+
+    const hasInvalidMeaning = meanings.some((item) =>
+      !isValidMeaningInput(item)
+    );
+    if (hasInvalidMeaning) {
+      return c.json({ error: "INVALID_MEANINGS_ITEM" }, 400);
+    }
+  }
+
+  try {
+    if (enText !== undefined) {
+      await wordService.updateUserWord(
+        wordbookId,
+        wordId,
+        enText.trim(),
+      );
+    }
+    if (meanings !== undefined) {
+      await wordService.updateUserMeanings(
+        wordId,
+        meanings,
+      );
+    }
+    const result = await wordService.getUserWordWithMeanings(wordId);
+
+    return c.json(result, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message ?? "INTERNAL_SERVER_ERROR" }, 500);
   }
 });
 

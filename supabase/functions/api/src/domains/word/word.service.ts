@@ -1,7 +1,7 @@
 import * as wordRepo from "./word.repository.ts";
 import {
-  CreateUserMeaningInput,
   MeaningDTO,
+  UserMeaningInput,
   UserMeaningRow,
   UserWordRow,
   WordDTO,
@@ -27,17 +27,66 @@ export const mapUserWordRowsToWordDTO = (
   };
 };
 
+export const mapUserMeaningRowsToMeaningDTO = (
+  meanings: UserMeaningRow[],
+): MeaningDTO[] => {
+  const meaningDTOs: MeaningDTO[] = meanings
+    .slice()
+    .sort((a, b) => a.order_index - b.order_index)
+    .map((m) => ({
+      part_of_speech: m.part_of_speech,
+      meaning: m.meaning,
+      order_index: m.order_index,
+    }));
+
+  return meaningDTOs;
+};
+
 // 사용자 단어 생성
 export const createUserWordWithMeanings = async (
   wordbookId: string,
   enText: string,
-  meanings: CreateUserMeaningInput[],
+  meanings: UserMeaningInput[],
 ): Promise<WordDTO> => {
   // TODO: 실패시 롤백하여 원자성 보장
   const userWord = await wordRepo.createUserWord(wordbookId, enText);
-  const userMeanings = meanings.length
-    ? await wordRepo.createUserMeanings(userWord.id, meanings)
-    : [];
+  const userMeanings = await wordRepo.createUserMeanings(userWord.id, meanings);
 
   return mapUserWordRowsToWordDTO(userWord, userMeanings);
+};
+
+// 사용자 단어 조회
+export const getUserWordWithMeanings = async (
+  wordId: string,
+): Promise<WordDTO> => {
+  const userWord = await wordRepo.getUserWord(wordId);
+  const userMeanings = await wordRepo.getUserMeanings(wordId);
+
+  return mapUserWordRowsToWordDTO(userWord, userMeanings);
+};
+
+// 사용자 영어 수정
+export const updateUserWord = async (
+  wordbookId: string,
+  wordId: string,
+  enText: string,
+): Promise<WordDTO> => {
+  // 영어 수정 시 update (cascade 방지)
+  const userWord = await wordRepo.updateUserWord(wordId, wordbookId, enText);
+
+  const userMeanings = await wordRepo.getUserMeanings(wordId);
+
+  return mapUserWordRowsToWordDTO(userWord, userMeanings);
+};
+
+// 사용자 의미 수정
+export const updateUserMeanings = async (
+  wordId: string,
+  meanings: UserMeaningInput[],
+): Promise<MeaningDTO[]> => {
+  // 의미 수정 시 replace (delete -> create)
+  await wordRepo.deleteUserMeanings(wordId);
+  const userMeanings = await wordRepo.createUserMeanings(wordId, meanings);
+
+  return mapUserMeaningRowsToMeaningDTO(userMeanings);
 };

@@ -1,9 +1,5 @@
 import { supabase } from "../../utils/supabase.ts";
-import {
-  CreateUserMeaningInput,
-  UserMeaningRow,
-  UserWordRow,
-} from "./word.types.ts";
+import { UserMeaningInput, UserMeaningRow, UserWordRow } from "./word.types.ts";
 
 export const createUserWord = async (
   wordbookId: string,
@@ -24,7 +20,7 @@ export const createUserWord = async (
 
 export const createUserMeanings = async (
   wordId: string,
-  inputs: CreateUserMeaningInput[],
+  inputs: UserMeaningInput[],
 ): Promise<UserMeaningRow[]> => {
   const payload = inputs.map((r) => ({
     word_id: wordId,
@@ -41,4 +37,65 @@ export const createUserMeanings = async (
 
   if (error) throw error;
   return data;
+};
+
+/**
+ * 논의: get은 wordbookId 검증 없이 조회,
+ * update, delete는 wordbookId 검증
+ */
+export const getUserWord = async (
+  wordId: string,
+): Promise<UserWordRow> => {
+  const { data, error } = await supabase
+    .from("user_word")
+    .select()
+    .eq("id", wordId)
+    .single<UserWordRow>();
+
+  if (error) throw error;
+  return data;
+};
+
+export const getUserMeanings = async (
+  wordId: string,
+): Promise<UserMeaningRow[]> => {
+  const { data, error } = await supabase
+    .from("user_meaning")
+    .select()
+    .eq("word_id", wordId)
+    .order("order_index", { ascending: true })
+    .overrideTypes<UserMeaningRow[], { merge: false }>();
+
+  if (error) throw error;
+  return data;
+};
+
+export const updateUserWord = async (
+  wordId: string,
+  wordbookId: string,
+  enText: string,
+): Promise<UserWordRow> => {
+  const { data, error } = await supabase
+    .from("user_word")
+    .update({
+      en_text: enText,
+    })
+    .eq("id", wordId)
+    .eq("wordbook_id", wordbookId)
+    .select()
+    .single<UserWordRow>();
+
+  if (error) throw error;
+  return data;
+};
+
+export const deleteUserMeanings = async (
+  wordId: string,
+): Promise<void> => {
+  const { error } = await supabase
+    .from("user_meaning")
+    .delete()
+    .eq("word_id", wordId);
+
+  if (error) throw error;
 };
