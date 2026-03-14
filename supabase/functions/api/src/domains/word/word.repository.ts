@@ -89,6 +89,26 @@ export const updateUserWord = async (
   return data;
 };
 
+export const deleteUserWordWithMeanings = async (
+  wordId: string,
+  wordbookId: string,
+): Promise<void> => {
+  const { data, error } = await supabase
+    .from("user_word")
+    .delete()
+    .eq("id", wordId)
+    .eq("wordbook_id", wordbookId)
+    .select("id");
+
+  // cascade로 meanings도 삭제됨
+
+  if (error) throw error;
+
+  if (!data || data.length === 0) {
+    throw new Error("USER_WORD_NOT_FOUND");
+  }
+};
+
 export const deleteUserMeanings = async (
   wordId: string,
 ): Promise<void> => {
