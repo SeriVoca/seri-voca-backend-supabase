@@ -1,5 +1,5 @@
 import { supabase } from "../../utils/supabase.ts";
-import { UserMeaningInput, UserMeaningRow, UserWordRow } from "./word.types.ts";
+import { SystemMeaningRow, SystemWordRow, MeaningInput, UserMeaningRow, UserWordRow } from "./word.types.ts";
 
 export const createUserWord = async (
   wordbookId: string,
@@ -20,7 +20,7 @@ export const createUserWord = async (
 
 export const createUserMeanings = async (
   wordId: string,
-  inputs: UserMeaningInput[],
+  inputs: MeaningInput[],
 ): Promise<UserMeaningRow[]> => {
   const payload = inputs.map((r) => ({
     word_id: wordId,
@@ -65,6 +65,33 @@ export const getUserMeanings = async (
     .eq("word_id", wordId)
     .order("order_index", { ascending: true })
     .overrideTypes<UserMeaningRow[], { merge: false }>();
+
+  if (error) throw error;
+  return data;
+};
+
+export const getSystemWord = async (
+  wordId: string,
+): Promise<SystemWordRow> => {
+  const { data, error } = await supabase
+    .from("system_word")
+    .select()
+    .eq("id", wordId)
+    .single<SystemWordRow>();
+
+  if (error) throw error;
+  return data;
+};
+
+export const getSystemMeanings = async (
+  wordId: string,
+): Promise<SystemMeaningRow[]> => {
+  const { data, error } = await supabase
+    .from("system_meaning")
+    .select()
+    .eq("word_id", wordId)
+    .order("order_index", { ascending: true })
+    .overrideTypes<SystemMeaningRow[], { merge: false }>();
 
   if (error) throw error;
   return data;
