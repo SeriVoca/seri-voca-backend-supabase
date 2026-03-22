@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import * as wordbookService from "./wordbook.service.ts";
 import * as wordService from "../word/word.service.ts";
 import { requireAuth } from "../../auth/auth.service.ts";
-import { UserMeaningInput } from "../word/word.types.ts";
+import { MeaningInput } from "../word/word.types.ts";
 import {
   isNonEmptyString,
   isUuid,
@@ -62,6 +62,42 @@ wordbookController.post("/", requireAuth, async (c) => {
 
 /*
   # POST
+  # /wordbooks/:wordbookId/words/system
+  # 사용자 단어장에 시스템 단어 생성
+*/
+wordbookController.post("/:wordbookId/words/system", requireAuth, async (c) => {
+  const wordbookId = c.req.param("wordbookId");
+
+  // 시스템 단어 id 확인
+  let body: {
+    systemWordId: string;
+  }
+
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error : "INVALID_JSON" }, 400);
+  }
+
+  const { systemWordId } = body;
+
+  if (!isUuid(wordbookId) || !isUuid(systemWordId)) {
+    return c.json({ error : "INVALID_ID_FORMAT" }, 400);
+  }
+
+  try {
+    const result = await wordService.copySystemWordToUserWordbook(
+      wordbookId,
+      systemWordId
+    );
+    return c.json(result, 201);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+})
+
+/*
+  # POST
   # /wordbooks/:wordbookId/words/user
   # 사용자 단어장에 사용자 단어 생성
 */
@@ -70,7 +106,7 @@ wordbookController.post("/:wordbookId/words/user", requireAuth, async (c) => {
 
   let body: {
     enText: string;
-    meanings: UserMeaningInput[];
+    meanings: MeaningInput[];
   };
 
   try {
@@ -131,7 +167,7 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
   let body: {
     wordId: string;
     enText?: string;
-    meanings?: UserMeaningInput[];
+    meanings?: MeaningInput[];
   };
 
   try {

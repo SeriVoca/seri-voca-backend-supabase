@@ -1,10 +1,11 @@
 import * as wordRepo from "./word.repository.ts";
 import {
   MeaningDTO,
-  UserMeaningInput,
+  MeaningInput,
   UserMeaningRow,
   UserWordRow,
   WordDTO,
+  PartOfSpeech
 } from "./word.types.ts";
 
 export const mapUserWordRowsToWordDTO = (
@@ -46,7 +47,7 @@ export const mapUserMeaningRowsToMeaningDTO = (
 export const createUserWordWithMeanings = async (
   wordbookId: string,
   enText: string,
-  meanings: UserMeaningInput[],
+  meanings: MeaningInput[],
 ): Promise<WordDTO> => {
   // TODO: 실패시 롤백하여 원자성 보장
   const userWord = await wordRepo.createUserWord(wordbookId, enText);
@@ -54,6 +55,31 @@ export const createUserWordWithMeanings = async (
 
   return mapUserWordRowsToWordDTO(userWord, userMeanings);
 };
+
+// 사용자 단어장에 시스템 단어 생성
+export const copySystemWordToUserWordbook = async (
+  wordbookId: string,
+  systemWordId: string
+): Promise<WordDTO> => {
+  // 시스템 단어 정보 조회
+  const systemWordData = await wordRepo.getSystemWord(systemWordId);
+  if (!systemWordData) throw new Error("SYSTEM_WORD_NOT_FOUND");
+
+  const systemMeaningsData = await wordRepo.getSystemMeanings(systemWordId);
+  if (!systemMeaningsData) throw new Error("SYSTEM_WORD_MEANINGS_NOT_FOUND");
+
+  // 입력값 세팅
+  const enText: string = systemWordData.en_text;
+  const meaningInput: MeaningInput[] = systemMeaningsData.map((m) => {
+    return { partOfSpeech: m.part_of_speech, meaning: m.meaning };
+  })
+
+  // 사용자 단어장에 추가
+  const userWord = await wordRepo.createUserWord(wordbookId, enText);
+  const userMeanings = await wordRepo.createUserMeanings(userWord.id, meaningInput);
+
+  return mapUserWordRowsToWordDTO(userWord, userMeanings);
+}
 
 // 사용자 단어 조회
 export const getUserWordWithMeanings = async (
@@ -82,7 +108,7 @@ export const updateUserWord = async (
 // 사용자 의미 수정
 export const updateUserMeanings = async (
   wordId: string,
-  meanings: UserMeaningInput[],
+  meanings: MeaningInput[],
 ): Promise<MeaningDTO[]> => {
   // 의미 수정 시 replace (delete -> create)
   await wordRepo.deleteUserMeanings(wordId);
