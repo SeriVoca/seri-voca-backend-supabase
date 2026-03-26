@@ -71,30 +71,30 @@ wordbookController.post("/:wordbookId/words/system", requireAuth, async (c) => {
   // 시스템 단어 id 확인
   let body: {
     systemWordId: string;
-  }
+  };
 
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error : "INVALID_JSON" }, 400);
+    return c.json({ error: "INVALID_JSON" }, 400);
   }
 
   const { systemWordId } = body;
 
   if (!isUuid(wordbookId) || !isUuid(systemWordId)) {
-    return c.json({ error : "INVALID_ID_FORMAT" }, 400);
+    return c.json({ error: "INVALID_ID_FORMAT" }, 400);
   }
 
   try {
     const result = await wordService.copySystemWordToUserWordbook(
       wordbookId,
-      systemWordId
+      systemWordId,
     );
     return c.json(result, 201);
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
   }
-})
+});
 
 /*
   # POST
