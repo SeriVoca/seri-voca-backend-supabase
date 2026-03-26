@@ -11,9 +11,25 @@ import {
 
 export const wordbookController = new Hono();
 
+/**
+  # GET
+  # /wordbooks/user
+  # 사용자 단어장 목록 조회
+ */
+wordbookController.get("/user", requireAuth, async (c) => {
+  const user_id = (c as any).get("userId") as string;
+
+  try {
+    const wordbooks = await wordbookService.getUserWordbooks(user_id);
+    return c.json(wordbooks);
+  } catch (_error: unknown) {
+    return c.json({ error: "INTERNAL_SERVER_ERROR" }, 500);
+  }
+});
+
 /*
   # GET
-  # /wordbook/:id
+  # /wordbooks/:id
   # 단어장 id로 단어 조회
 */
 wordbookController.get("/:id", async (c) => {

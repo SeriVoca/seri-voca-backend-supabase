@@ -87,6 +87,26 @@ export class UserWordbookMapper {
   }
 }
 
+export const mapWordbookDtoToWordbookRow = (
+  wordbookRow: WordbookRow,
+): WordbookDTO => {
+  return {
+    id: wordbookRow.id,
+    title: wordbookRow.title,
+    description: wordbookRow.description,
+    type: wordbookRow.type,
+  };
+};
+
+// 사용자 단어장 목록 조회
+export const getUserWordbooks = async (
+  user_id: string,
+): Promise<WordbookDTO[]> => {
+  const wordbookRows = await wordbookRepo.findUserWordbooks(user_id);
+
+  return wordbookRows.map(mapWordbookDtoToWordbookRow);
+};
+
 // 단어장 id로 단어 조회
 export const getWordsInWordbook = async (
   wordbook_id: string,
