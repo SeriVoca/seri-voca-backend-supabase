@@ -11,9 +11,25 @@ import {
 
 export const wordbookController = new Hono();
 
+/**
+  # GET
+  # /wordbooks/user
+  # 사용자 단어장 목록 조회
+ */
+wordbookController.get("/user", requireAuth, async (c) => {
+  const user_id = (c as any).get("userId") as string;
+
+  try {
+    const wordbooks = await wordbookService.getUserWordbooks(user_id);
+    return c.json(wordbooks);
+  } catch (_error: unknown) {
+    return c.json({ error: "INTERNAL_SERVER_ERROR" }, 500);
+  }
+});
+
 /*
   # GET
-  # /wordbook/:id
+  # /wordbooks/:id
   # 단어장 id로 단어 조회
 */
 wordbookController.get("/:id", async (c) => {
@@ -71,30 +87,30 @@ wordbookController.post("/:wordbookId/words/system", requireAuth, async (c) => {
   // 시스템 단어 id 확인
   let body: {
     systemWordId: string;
-  }
+  };
 
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error : "INVALID_JSON" }, 400);
+    return c.json({ error: "INVALID_JSON" }, 400);
   }
 
   const { systemWordId } = body;
 
   if (!isUuid(wordbookId) || !isUuid(systemWordId)) {
-    return c.json({ error : "INVALID_ID_FORMAT" }, 400);
+    return c.json({ error: "INVALID_ID_FORMAT" }, 400);
   }
 
   try {
     const result = await wordService.copySystemWordToUserWordbook(
       wordbookId,
-      systemWordId
+      systemWordId,
     );
     return c.json(result, 201);
   } catch (error: any) {
     return c.json({ error: error.message }, 500);
   }
-})
+});
 
 /*
   # POST

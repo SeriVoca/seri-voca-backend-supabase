@@ -7,6 +7,22 @@ import {
 } from "./wordbook.types.ts";
 import { WordSource } from "../word/word.types.ts";
 
+export const findUserWordbooks = async (
+  userId: string,
+): Promise<WordbookRow[]> => {
+  const { data, error } = await supabase
+    .from("wordbook")
+    .select()
+    .eq("owner_id", userId)
+    .eq("type", "USER")
+    .order("created_at", { ascending: true })
+    .overrideTypes<WordbookRow[], { merge: false }>();
+
+  if (error) throw error;
+
+  return data;
+};
+
 // 단어장 id로 단어 조회
 export const findSystemWordsByWordbookId = async (
   wordbookId: string,
@@ -151,3 +167,7 @@ export const deleteUserWordbook = async (
 
   return true;
 };
+
+function async() {
+  throw new Error("Function not implemented.");
+}
