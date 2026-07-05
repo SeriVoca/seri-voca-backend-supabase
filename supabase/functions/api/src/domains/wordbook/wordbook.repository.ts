@@ -77,25 +77,43 @@ export const findUserWordByWordbookId = async (
   wordbookId: string,
 ): Promise<UserWordbookItemRow[]> => {
   const { data, error } = await supabase
-    .from("wordbook")
+    .from("user_word")
     .select(`
-      user_word (
-        id,  
+      id,
+      wordbook_id,
+      order_index,
+      en_text,
+      created_at,
+      user_meaning (
+        id,
+        word_id,
+        part_of_speech,
+        meaning,
         order_index,
-        en_text
-        user_meaning (
-          part_of_speech,
-          meaning,
-          order_index
-        )
-      )`)
+        created_at
+      )
+    `)
     .eq("wordbook_id", wordbookId)
     .order("order_index", { ascending: true })
-    .overrideTypes<UserWordbookItemRow[], { merge: false }>();
+    .order("order_index", {
+      referencedTable: "user_meaning",
+      ascending: true,
+    });
 
   if (error) throw error;
 
-  return data;
+  return (data || []).map((row) => ({
+    source: "USER",
+    order_index: row.order_index,
+    word: {
+      id: row.id,
+      wordbook_id: row.wordbook_id,
+      en_text: row.en_text,
+      order_index: row.order_index,
+      created_at: row.created_at,
+      meanings: row.user_meaning,
+    },
+  }));
 };
 
 export const getSourceByWordbookId = async (
