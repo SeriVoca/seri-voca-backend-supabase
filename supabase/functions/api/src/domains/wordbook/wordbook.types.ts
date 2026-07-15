@@ -1,4 +1,5 @@
 import {
+  PartOfSpeech,
   SystemWordWithMeaningsRow,
   UserWordWithMeaningsRow,
   WordSource,
@@ -66,7 +67,7 @@ export interface WordbookWord {
     id: string;
     text: string;
     meanings: {
-      partOfSpeech: string;
+      partOfSpeech: PartOfSpeech;
       meaning: string;
       orderIndex: number;
     }[];
@@ -74,17 +75,6 @@ export interface WordbookWord {
 }
 
 // DTO Layer
-export interface WordbookWordDTO {
-  id: string;
-  en_text: string;
-  order_index: number;
-  meanings: {
-    part_of_speech: string;
-    meaning: string;
-    order_index: number;
-  }[];
-}
-
 // 어디서 쓰이는지 모르겠음 커리큘럼?
 export interface WordbookDTO {
   id: string;

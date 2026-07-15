@@ -24,6 +24,7 @@ export const mapUserWordRowsToWordDTO = (
   return {
     id: word.id,
     en_text: word.en_text,
+    order_index: word.order_index,
     meanings: meaningDTOs,
   };
 };

@@ -73,6 +73,7 @@ export interface MeaningDTO {
 export interface WordDTO {
   id: string;
   en_text: string;
+  order_index: number;
   meanings: MeaningDTO[];
 }
 
