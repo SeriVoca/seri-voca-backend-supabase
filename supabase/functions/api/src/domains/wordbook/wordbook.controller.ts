@@ -111,6 +111,9 @@ wordbookController.post("/:wordbookId/words/system", requireAuth, async (c) => {
     if (error.message === "SYSTEM_WORD_NOT_FOUND") {
       return c.json({ error: error.message }, 404);
     }
+    if (error.message === "DUPLICATE_WORD") {
+      return c.json({ error: error.message }, 409);
+    }
     return c.json({ error: error.message }, 500);
   }
 });

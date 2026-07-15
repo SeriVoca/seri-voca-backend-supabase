@@ -57,41 +57,63 @@ export const createUserWordWithMeanings = async (
   return mapUserWordRowsToWordDTO(userWord, userMeanings);
 };
 
-// 사용자 단어장에 시스템 단어 생성
+// 중복 판정용 정규화 (대소문자/양끝 공백 무시)
+const normalizeEnText = (enText: string): string => enText.trim().toLowerCase();
+
+// 사용자 단어장에 시스템 단어 생성 (이미 있는 단어면 DUPLICATE_WORD)
 export const copySystemWordToUserWordbook = async (
   wordbookId: string,
-  systemWordId: string
+  systemWordId: string,
 ): Promise<WordDTO> => {
-  // 시스템 단어 정보 조회
-  const systemWordData = await wordRepo.getSystemWord(systemWordId);
-  if (!systemWordData) throw new Error("SYSTEM_WORD_NOT_FOUND");
+  const [result] = await copySystemWordsToUserWordbook(wordbookId, [
+    systemWordId,
+  ]);
+  if (!result) throw new Error("DUPLICATE_WORD");
+  return result;
+};
 
-  const systemMeaningsData = await wordRepo.getSystemMeanings(systemWordId);
-  if (!systemMeaningsData) throw new Error("SYSTEM_WORD_MEANINGS_NOT_FOUND");
-
-  // 입력값 세팅
-  const enText: string = systemWordData.en_text;
-  const meaningInput: MeaningInput[] = systemMeaningsData.map((m) => {
-    return { partOfSpeech: m.part_of_speech, meaning: m.meaning };
-  })
-
-  // 사용자 단어장에 추가
-  const userWord = await wordRepo.createUserWord(wordbookId, enText);
-  const userMeanings = await wordRepo.createUserMeanings(userWord.id, meaningInput);
-
-  return mapUserWordRowsToWordDTO(userWord, userMeanings);
-}
-
-// 사용자 단어장에 시스템 단어 여러 개 생성
+// 사용자 단어장에 시스템 단어 여러 개 생성 (이미 있는 단어는 건너뜀)
 export const copySystemWordsToUserWordbook = async (
   wordbookId: string,
   systemWordIds: string[],
 ): Promise<WordDTO[]> => {
   // TODO: 실패 시 롤백하여 원자성 보장
+  const existingEnTexts = await wordRepo.findUserWordEnTextsByWordbookId(
+    wordbookId,
+  );
+  const seen = new Set(existingEnTexts.map(normalizeEnText));
+
   const results: WordDTO[] = [];
-  for (const systemWordId of systemWordIds) {
-    results.push(await copySystemWordToUserWordbook(wordbookId, systemWordId));
+  for (const systemWordId of new Set(systemWordIds)) {
+    // 시스템 단어 정보 조회
+    const systemWordData = await wordRepo.getSystemWord(systemWordId);
+    if (!systemWordData) throw new Error("SYSTEM_WORD_NOT_FOUND");
+
+    // 단어장에 이미 있는 단어(en_text 기준)는 건너뜀
+    if (seen.has(normalizeEnText(systemWordData.en_text))) continue;
+
+    const systemMeaningsData = await wordRepo.getSystemMeanings(systemWordId);
+    if (!systemMeaningsData) throw new Error("SYSTEM_WORD_MEANINGS_NOT_FOUND");
+
+    // 입력값 세팅
+    const meaningInput: MeaningInput[] = systemMeaningsData.map((m) => {
+      return { partOfSpeech: m.part_of_speech, meaning: m.meaning };
+    });
+
+    // 사용자 단어장에 추가
+    const userWord = await wordRepo.createUserWord(
+      wordbookId,
+      systemWordData.en_text,
+    );
+    const userMeanings = await wordRepo.createUserMeanings(
+      userWord.id,
+      meaningInput,
+    );
+
+    seen.add(normalizeEnText(systemWordData.en_text));
+    results.push(mapUserWordRowsToWordDTO(userWord, userMeanings));
   }
+
   return results;
 };
 
