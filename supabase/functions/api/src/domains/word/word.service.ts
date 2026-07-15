@@ -82,6 +82,19 @@ export const copySystemWordToUserWordbook = async (
   return mapUserWordRowsToWordDTO(userWord, userMeanings);
 }
 
+// 사용자 단어장에 시스템 단어 여러 개 생성
+export const copySystemWordsToUserWordbook = async (
+  wordbookId: string,
+  systemWordIds: string[],
+): Promise<WordDTO[]> => {
+  // TODO: 실패 시 롤백하여 원자성 보장
+  const results: WordDTO[] = [];
+  for (const systemWordId of systemWordIds) {
+    results.push(await copySystemWordToUserWordbook(wordbookId, systemWordId));
+  }
+  return results;
+};
+
 // 사용자 단어 조회
 export const getUserWordWithMeanings = async (
   wordId: string,

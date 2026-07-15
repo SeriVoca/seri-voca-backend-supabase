@@ -72,12 +72,13 @@ export const getUserMeanings = async (
 
 export const getSystemWord = async (
   wordId: string,
-): Promise<SystemWordRow> => {
+): Promise<SystemWordRow | null> => {
+  // 0건일 때 에러 대신 null을 반환해 서비스 계층에서 NOT_FOUND 처리
   const { data, error } = await supabase
     .from("system_word")
     .select()
     .eq("id", wordId)
-    .single<SystemWordRow>();
+    .maybeSingle<SystemWordRow>();
 
   if (error) throw error;
   return data;
