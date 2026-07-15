@@ -1,7 +1,7 @@
 import {
+  MeaningInput,
   PART_OF_SPEECH_VALUES,
   PartOfSpeech,
-  UserMeaningInput,
 } from "../domains/word/word.types.ts";
 
 const UUID_REGEX =
@@ -22,7 +22,7 @@ export const isValidPartOfSpeech = (value: unknown): value is PartOfSpeech => {
 
 export const isValidMeaningInput = (
   value: unknown,
-): value is UserMeaningInput => {
+): value is MeaningInput => {
   if (typeof value !== "object" || value === null) return false;
 
   const v = value as Record<string, unknown>;

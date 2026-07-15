@@ -5,8 +5,8 @@ import {
   WordbookDTO,
   WordbookRow,
   WordbookWord,
-  WordbookWordDTO,
 } from "./wordbook.types.ts";
+import { WordDTO } from "../word/word.types.ts";
 
 export class SystemWordbookMapper {
   static toDomain(row: SystemWordbookItemRow): WordbookWord | null {
@@ -27,7 +27,7 @@ export class SystemWordbookMapper {
     };
   }
 
-  static toDTO(domain: WordbookWord): WordbookWordDTO {
+  static toDTO(domain: WordbookWord): WordDTO {
     return {
       id: domain.word.id,
       en_text: domain.word.text,
@@ -62,7 +62,7 @@ export class UserWordbookMapper {
     };
   }
 
-  static toDTO(domain: WordbookWord): WordbookWordDTO {
+  static toDTO(domain: WordbookWord): WordDTO {
     return {
       id: domain.word.id,
       en_text: domain.word.text,
@@ -110,7 +110,7 @@ export const getUserWordbooks = async (
 // 단어장 id로 단어 조회
 export const getWordsInWordbook = async (
   wordbook_id: string,
-): Promise<WordbookWordDTO[]> => {
+): Promise<WordDTO[]> => {
   const source = await wordbookRepo.getSourceByWordbookId(wordbook_id);
 
   if (source === "SYSTEM") {
