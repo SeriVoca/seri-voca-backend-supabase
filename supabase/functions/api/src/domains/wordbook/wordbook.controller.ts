@@ -108,9 +108,64 @@ wordbookController.post("/:wordbookId/words/system", requireAuth, async (c) => {
     );
     return c.json(result, 201);
   } catch (error: any) {
+    if (error.message === "SYSTEM_WORD_NOT_FOUND") {
+      return c.json({ error: error.message }, 404);
+    }
+    if (error.message === "DUPLICATE_WORD") {
+      return c.json({ error: error.message }, 409);
+    }
     return c.json({ error: error.message }, 500);
   }
 });
+
+/*
+  # POST
+  # /wordbooks/:wordbookId/words/system/bulk
+  # 사용자 단어장에 시스템 단어 여러 개 생성
+*/
+wordbookController.post(
+  "/:wordbookId/words/system/bulk",
+  requireAuth,
+  async (c) => {
+    const wordbookId = c.req.param("wordbookId");
+
+    let body: {
+      systemWordIds: string[];
+    };
+
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "INVALID_JSON" }, 400);
+    }
+
+    const { systemWordIds } = body;
+
+    if (!isUuid(wordbookId)) {
+      return c.json({ error: "INVALID_ID_FORMAT" }, 400);
+    }
+    if (
+      !Array.isArray(systemWordIds) ||
+      systemWordIds.length === 0 ||
+      systemWordIds.some((id) => !isUuid(id))
+    ) {
+      return c.json({ error: "INVALID_SYSTEM_WORD_IDS" }, 400);
+    }
+
+    try {
+      const results = await wordService.copySystemWordsToUserWordbook(
+        wordbookId,
+        systemWordIds,
+      );
+      return c.json(results, 201);
+    } catch (error: any) {
+      if (error.message === "SYSTEM_WORD_NOT_FOUND") {
+        return c.json({ error: error.message }, 404);
+      }
+      return c.json({ error: error.message }, 500);
+    }
+  },
+);
 
 /*
   # POST

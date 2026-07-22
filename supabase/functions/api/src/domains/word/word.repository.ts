@@ -70,14 +70,27 @@ export const getUserMeanings = async (
   return data;
 };
 
+export const findUserWordEnTextsByWordbookId = async (
+  wordbookId: string,
+): Promise<string[]> => {
+  const { data, error } = await supabase
+    .from("user_word")
+    .select("en_text")
+    .eq("wordbook_id", wordbookId);
+
+  if (error) throw error;
+  return (data ?? []).map((row) => row.en_text as string);
+};
+
 export const getSystemWord = async (
   wordId: string,
-): Promise<SystemWordRow> => {
+): Promise<SystemWordRow | null> => {
+  // 0건일 때 에러 대신 null을 반환해 서비스 계층에서 NOT_FOUND 처리
   const { data, error } = await supabase
     .from("system_word")
     .select()
     .eq("id", wordId)
-    .single<SystemWordRow>();
+    .maybeSingle<SystemWordRow>();
 
   if (error) throw error;
   return data;
