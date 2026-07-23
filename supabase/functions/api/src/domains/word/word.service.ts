@@ -168,10 +168,39 @@ export const updateUserMeanings = async (
   return mapUserMeaningRowsToMeaningDTO(userMeanings);
 };
 
-// 사용자 단어 삭제
+// 사용자 단어 1개 삭제
+const deleteOneUserWord = async (
+  wordId: string,
+  wordbookId: string,
+): Promise<UserWordRow | null> => {
+  return await wordRepo.deleteUserWordWithMeanings(wordId, wordbookId);
+};
+
+// 사용자 단어 단일 삭제 (없는 단어면 USER_WORD_NOT_FOUND)
 export const deleteUserWordWithMeanings = async (
   wordId: string,
   wordbookId: string,
-): Promise<void> => {
-  await wordRepo.deleteUserWordWithMeanings(wordId, wordbookId);
+): Promise<string | null> => {
+  const deletedWord = await deleteOneUserWord(wordId, wordbookId);
+
+  if (!deletedWord) {
+    throw new Error("USER_WORD_NOT_FOUND");
+  }
+
+  return deletedWord.id;
+};
+
+// 사용자 단어 여러 개 삭제 (없는 단어는 건너뜀)
+export const deleteUserWordsWithMeanings = async (
+  wordIds: string[],
+  wordbookId: string,
+): Promise<string[]> => {
+  const deletedWordIds: string[] = [];
+
+  for (const wordId of new Set(wordIds)) {
+    const deletedWord = await deleteOneUserWord(wordId, wordbookId);
+    if (deletedWord) deletedWordIds.push(deletedWord.id);
+  }
+
+  return deletedWordIds;
 };

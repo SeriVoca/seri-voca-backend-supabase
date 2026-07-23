@@ -1,5 +1,11 @@
 import { supabase } from "../../utils/supabase.ts";
-import { SystemMeaningRow, SystemWordRow, MeaningInput, UserMeaningRow, UserWordRow } from "./word.types.ts";
+import {
+  MeaningInput,
+  SystemMeaningRow,
+  SystemWordRow,
+  UserMeaningRow,
+  UserWordRow,
+} from "./word.types.ts";
 
 export const createUserWord = async (
   wordbookId: string,
@@ -132,21 +138,20 @@ export const updateUserWord = async (
 export const deleteUserWordWithMeanings = async (
   wordId: string,
   wordbookId: string,
-): Promise<void> => {
+): Promise<UserWordRow | null> => {
+  // 0건일 때 에러 대신 null을 반환해 서비스 계층에서 NOT_FOUND 처리
   const { data, error } = await supabase
     .from("user_word")
     .delete()
     .eq("id", wordId)
     .eq("wordbook_id", wordbookId)
-    .select("id");
+    .select()
+    .maybeSingle<UserWordRow>();
 
   // cascade로 meanings도 삭제됨
 
   if (error) throw error;
-
-  if (!data || data.length === 0) {
-    throw new Error("USER_WORD_NOT_FOUND");
-  }
+  return data;
 };
 
 export const deleteUserMeanings = async (
