@@ -11,6 +11,8 @@ const COMMON_ERROR_CODES = {
   // 401 / 403
   UNAUTHORIZED: { status: 401, message: "인증이 필요합니다." },
   FORBIDDEN: { status: 403, message: "권한이 없습니다." },
+  // 404 - 라우팅 실패. 리소스가 없는 경우는 도메인별 NOT_FOUND 코드를 쓴다
+  ROUTE_NOT_FOUND: { status: 404, message: "요청한 경로를 찾을 수 없습니다." },
   // 409 - DB unique 위반. 도메인별 구체적인 문구가 필요하면 서비스에서 판단해 던진다
   DUPLICATE_RESOURCE: { status: 409, message: "이미 존재하는 데이터입니다." },
   // 500

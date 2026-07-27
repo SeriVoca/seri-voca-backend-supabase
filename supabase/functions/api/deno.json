@@ -3,6 +3,7 @@
     "@/": "./src/",
     "hono": "jsr:@hono/hono",
     "hono/cors": "jsr:@hono/hono/cors",
+    "hono/utils/http-status": "jsr:@hono/hono/utils/http-status",
     "supabase": "jsr:@supabase/supabase-js"
   },
   "tasks": {
