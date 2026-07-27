@@ -1,4 +1,5 @@
 import * as curriculumRepo from "@/domains/curriculum/curriculum.repository.ts";
+import { AppError } from "@/shared/errors/app-error.ts";
 import {
   CurriculumWordbook,
   CurriculumWordbookDTO,
@@ -36,15 +37,23 @@ export const getDefaultWordbooks = async (): Promise<
   CurriculumWordbookDTO[]
 > => {
   // 1. 커리큘럼 id 조회
-  const curriculum_id = await curriculumRepo
-    .findHomeCurriculumId();
+  // 정책상 HOME 커리큘럼은 정확히 1건이어야 한다. 0건이든 2건 이상이든 데이터 오류다
+  const home_curriculum_ids = await curriculumRepo.findHomeCurriculumIds();
+  if (home_curriculum_ids.length !== 1) {
+    throw new AppError("DEFAULT_CURRICULUM_NOT_FOUND", {
+      cause: new Error(
+        `HOME 커리큘럼이 ${home_curriculum_ids.length}건입니다 (정책: 1건)`,
+      ),
+    });
+  }
+  const curriculum_id = home_curriculum_ids[0];
 
   // 2. 단어장 목록 조회
   const wordbook_list = await curriculumRepo
     .findWordbooksByCurriculumId(curriculum_id);
 
   // 3. 데이터 변환 (Refine)
-  return (wordbook_list || [])
+  return wordbook_list
     .map((row) => CurriculumMapper.toDomain(row))
     .map((domain) => CurriculumMapper.toDTO(domain));
 };
