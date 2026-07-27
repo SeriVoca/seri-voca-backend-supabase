@@ -1,5 +1,6 @@
 import type { ErrorCodeMap } from "./error-definition.ts";
 import { CURRICULUM_ERROR_CODES } from "@/domains/curriculum/curriculum.error-codes.ts";
+import { USER_ERROR_CODES } from "@/domains/user/user.error-codes.ts";
 import { WORD_ERROR_CODES } from "@/domains/word/word.error-codes.ts";
 import { WORDBOOK_ERROR_CODES } from "@/domains/wordbook/wordbook.error-codes.ts";
 
@@ -25,6 +26,7 @@ const COMMON_ERROR_CODES = {
 export const ERROR_CODES = {
   ...COMMON_ERROR_CODES,
   ...CURRICULUM_ERROR_CODES,
+  ...USER_ERROR_CODES,
   ...WORD_ERROR_CODES,
   ...WORDBOOK_ERROR_CODES,
 } as const;

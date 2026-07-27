@@ -1,4 +1,5 @@
 import * as userRepository from "./user.repository.ts";
+import { AppError } from "@/shared/errors/app-error.ts";
 import { UserProfile, UserProfileDTO, UserProfileRow } from "./user.types.ts";
 
 export class UserMapper {
@@ -23,9 +24,14 @@ export class UserMapper {
 
 export const getUserProfile = async (
   userId: string,
-): Promise<UserProfile | null> => {
+): Promise<UserProfileDTO> => {
+  // 가입 시 자동 생성되므로 행이 없다면 데이터 오류다. 추적을 위해 userId를 로그에 남긴다
   const profile = await userRepository.findProfileById(userId);
-  if (!profile) return null;
+  if (!profile) {
+    throw new AppError("USER_PROFILE_MISSING", {
+      cause: new Error(`인증된 사용자(${userId})의 user 행이 없습니다`),
+    });
+  }
 
   return UserMapper.toDTO(UserMapper.toDomain(profile));
 };
