@@ -40,7 +40,7 @@ export const getDefaultWordbooks = async (): Promise<
   // 정책상 HOME 커리큘럼은 정확히 1건이어야 한다. 0건이든 2건 이상이든 데이터 오류다
   const home_curriculum_ids = await curriculumRepo.findHomeCurriculumIds();
   if (home_curriculum_ids.length !== 1) {
-    throw new AppError("DEFAULT_CURRICULUM_NOT_FOUND", {
+    throw new AppError("DEFAULT_CURRICULUM_MISCONFIGURED", {
       cause: new Error(
         `HOME 커리큘럼이 ${home_curriculum_ids.length}건입니다 (정책: 1건)`,
       ),
