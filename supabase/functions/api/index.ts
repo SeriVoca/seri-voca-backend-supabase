@@ -2,7 +2,7 @@
 // supabase/functions/api/index.ts
 
 // 1. Hono 프레임워크 가져오기 (Deno는 npm install 없이 URL로 가져옵니다)
-import { Hono } from "hono";
+import { Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import { createClient } from "supabase";
 import { curriculumController } from "@/domains/curriculum/curriculum.controller.ts";
@@ -38,11 +38,12 @@ app.route("curriculums", curriculumController);
 app.route("wordbooks", wordbookController);
 app.route("user", userController);
 
+// 에러 응답은 AppError 하나만 보고 만든다. code/status/message가 항상 같은 정의에서 나온다
+const errorResponse = (c: Context, error: AppError) =>
+  c.json({ error: { code: error.code, message: error.message } }, error.status);
+
 // 등록되지 않은 경로
-app.notFound((c) => {
-  const { status, message } = ERROR_CODES.ROUTE_NOT_FOUND;
-  return c.json({ error: { code: "ROUTE_NOT_FOUND", message } }, status);
-});
+app.notFound((c) => errorResponse(c, new AppError("ROUTE_NOT_FOUND")));
 
 // 에러 응답 단일 창구. 핸들러에서 throw된 에러는 모두 여기로 모인다
 app.onError((err, c) => {
@@ -51,16 +52,12 @@ app.onError((err, c) => {
     if (err.status >= 500) {
       console.error(`[${err.code}]`, err.cause ?? err);
     }
-    return c.json(
-      { error: { code: err.code, message: err.message } },
-      err.status,
-    );
+    return errorResponse(c, err);
   }
 
   // AppError가 아니면 예상하지 못한 버그. 내부 정보는 응답에 싣지 않고 로그로만 남긴다
   console.error("[UNHANDLED]", err);
-  const { status, message } = ERROR_CODES.INTERNAL_SERVER_ERROR;
-  return c.json({ error: { code: "INTERNAL_SERVER_ERROR", message } }, status);
+  return errorResponse(c, new AppError("INTERNAL_SERVER_ERROR"));
 });
 
 // 런타임 환경에서 서빙
