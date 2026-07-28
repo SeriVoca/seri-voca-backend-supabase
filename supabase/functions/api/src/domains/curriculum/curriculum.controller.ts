@@ -9,14 +9,8 @@ export const curriculumController = new Hono();
   # 기본 커리큘럼의 단어장 목록 조회
 */
 
+// 에러는 throw만 하고 index.ts의 onError가 응답으로 변환한다
 curriculumController.get("/default", async (c) => {
-  try {
-    const result = await curriculumService.getDefaultWordbooks();
-    return c.json(result);
-  } catch (error: any) {
-    if (error.message === "DEFAULT_CURRICULUM_NOT_FOUND") {
-      return c.json({ error: "기본 커리큘럼을 찾을 수 없습니다." }, 404);
-    }
-    return c.json({ error: error.message }, 500);
-  }
+  const result = await curriculumService.getDefaultWordbooks();
+  return c.json(result);
 });
