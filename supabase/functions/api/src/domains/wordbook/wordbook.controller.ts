@@ -8,6 +8,7 @@ import {
   isNonEmptyString,
   isUuid,
   isValidMeaningInput,
+  normalizeMeaningInputs,
 } from "../../utils/validators.ts";
 
 export const wordbookController = new Hono();
@@ -190,10 +191,7 @@ wordbookController.post("/:wordbookId/words/user", requireAuth, async (c) => {
   const result = await wordService.createUserWordWithMeanings(
     wordbookId,
     enText.trim(),
-    meanings.map((m) => ({
-      partOfSpeech: m.partOfSpeech,
-      meaning: m.meaning.trim(),
-    })),
+    normalizeMeaningInputs(meanings),
   );
 
   return c.json(result, 201);
@@ -242,9 +240,13 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
   }
 
   // 4. meanings 검증
+  // 뜻 수정은 전체 교체라 빈 배열을 허용하면 기존 뜻이 전부 사라진다
   if (meanings !== undefined) {
     if (!Array.isArray(meanings)) {
       throw new AppError("INVALID_MEANINGS_TYPE");
+    }
+    if (meanings.length === 0) {
+      throw new AppError("EMPTY_MEANINGS");
     }
 
     const hasInvalidMeaning = meanings.some((item) =>
@@ -265,7 +267,7 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
   if (meanings !== undefined) {
     await wordService.updateUserMeanings(
       wordId,
-      meanings,
+      normalizeMeaningInputs(meanings),
     );
   }
   const result = await wordService.getUserWordWithMeanings(wordId);

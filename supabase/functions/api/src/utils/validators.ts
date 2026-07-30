@@ -39,3 +39,13 @@ export const isValidMeaningInput = (
 
   return true;
 };
+
+// 저장 전 정규화. isValidMeaningInput이 trim한 값으로 검증하므로
+// 저장도 같은 값으로 해야 검증한 것과 저장한 것이 어긋나지 않는다
+export const normalizeMeaningInputs = (
+  meanings: MeaningInput[],
+): MeaningInput[] =>
+  meanings.map((m) => ({
+    partOfSpeech: m.partOfSpeech,
+    meaning: m.meaning.trim(),
+  }));
