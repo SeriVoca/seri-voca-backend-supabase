@@ -131,7 +131,7 @@ export const getWordsInWordbook = async (
       );
   } else {
     // type이 SYSTEM/USER 외의 값인 경우. 스키마상 있어선 안 되는 데이터 오류다
-    throw new AppError("WORDBOOK_TYPE_INVALID", {
+    throw new AppError("WORDBOOK_TYPE_MISCONFIGURED", {
       cause: new Error(
         `단어장(${wordbook_id})의 type이 올바르지 않습니다: ${source}`,
       ),
