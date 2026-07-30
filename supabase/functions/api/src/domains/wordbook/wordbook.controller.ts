@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import * as wordbookService from "./wordbook.service.ts";
 import * as wordService from "../word/word.service.ts";
 import { requireAuth } from "../../auth/auth.service.ts";
+import { AppError } from "@/shared/errors/app-error.ts";
 import { MeaningInput } from "../word/word.types.ts";
 import {
   isNonEmptyString,
@@ -11,6 +12,8 @@ import {
 
 export const wordbookController = new Hono();
 
+// 에러는 throw만 하고 index.ts의 onError가 응답으로 변환한다
+
 /**
   # GET
   # /wordbooks/user
@@ -19,12 +22,8 @@ export const wordbookController = new Hono();
 wordbookController.get("/user", requireAuth, async (c) => {
   const user_id = (c as any).get("userId") as string;
 
-  try {
-    const wordbooks = await wordbookService.getUserWordbooks(user_id);
-    return c.json(wordbooks);
-  } catch (_error: unknown) {
-    return c.json({ error: "INTERNAL_SERVER_ERROR" }, 500);
-  }
+  const wordbooks = await wordbookService.getUserWordbooks(user_id);
+  return c.json(wordbooks);
 });
 
 /*
@@ -34,12 +33,13 @@ wordbookController.get("/user", requireAuth, async (c) => {
 */
 wordbookController.get("/:id", async (c) => {
   const wordbook_id = c.req.param("id");
-  try {
-    const result = await wordbookService.getWordsInWordbook(wordbook_id);
-    return c.json(result);
-  } catch (error: any) {
-    return c.json({ error: error.message }, 500);
+
+  if (!isUuid(wordbook_id)) {
+    throw new AppError("INVALID_WORDBOOK_ID");
   }
+
+  const result = await wordbookService.getWordsInWordbook(wordbook_id);
+  return c.json(result);
 });
 
 /*
@@ -54,26 +54,22 @@ wordbookController.post("/", requireAuth, async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "INVALID_JSON" }, 400);
+    throw new AppError("INVALID_JSON");
   }
 
   const title = body.title?.trim();
   const description = body.description ?? null;
 
   if (!title) {
-    return c.json({ error: "TITLE_REQUIRED" }, 400);
+    throw new AppError("TITLE_REQUIRED");
   }
 
-  try {
-    const wordbook = await wordbookService.createUserWordbook(
-      user_id,
-      title,
-      description,
-    );
-    return c.json(wordbook);
-  } catch (_error: unknown) {
-    return c.json({ error: "INTERNAL_SERVER_ERROR" }, 500);
-  }
+  const wordbook = await wordbookService.createUserWordbook(
+    user_id,
+    title,
+    description,
+  );
+  return c.json(wordbook);
 });
 
 /*
@@ -84,7 +80,6 @@ wordbookController.post("/", requireAuth, async (c) => {
 wordbookController.post("/:wordbookId/words/system", requireAuth, async (c) => {
   const wordbookId = c.req.param("wordbookId");
 
-  // 시스템 단어 id 확인
   let body: {
     systemWordId: string;
   };
@@ -92,30 +87,23 @@ wordbookController.post("/:wordbookId/words/system", requireAuth, async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "INVALID_JSON" }, 400);
+    throw new AppError("INVALID_JSON");
   }
 
   const { systemWordId } = body;
 
-  if (!isUuid(wordbookId) || !isUuid(systemWordId)) {
-    return c.json({ error: "INVALID_ID_FORMAT" }, 400);
+  if (!isUuid(wordbookId)) {
+    throw new AppError("INVALID_WORDBOOK_ID");
+  }
+  if (!isUuid(systemWordId)) {
+    throw new AppError("INVALID_SYSTEM_WORD_ID");
   }
 
-  try {
-    const result = await wordService.copySystemWordToUserWordbook(
-      wordbookId,
-      systemWordId,
-    );
-    return c.json(result, 201);
-  } catch (error: any) {
-    if (error.message === "SYSTEM_WORD_NOT_FOUND") {
-      return c.json({ error: error.message }, 404);
-    }
-    if (error.message === "DUPLICATE_WORD") {
-      return c.json({ error: error.message }, 409);
-    }
-    return c.json({ error: error.message }, 500);
-  }
+  const result = await wordService.copySystemWordToUserWordbook(
+    wordbookId,
+    systemWordId,
+  );
+  return c.json(result, 201);
 });
 
 /*
@@ -136,34 +124,27 @@ wordbookController.post(
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: "INVALID_JSON" }, 400);
+      throw new AppError("INVALID_JSON");
     }
 
     const { systemWordIds } = body;
 
     if (!isUuid(wordbookId)) {
-      return c.json({ error: "INVALID_ID_FORMAT" }, 400);
+      throw new AppError("INVALID_WORDBOOK_ID");
     }
     if (
       !Array.isArray(systemWordIds) ||
       systemWordIds.length === 0 ||
       systemWordIds.some((id) => !isUuid(id))
     ) {
-      return c.json({ error: "INVALID_SYSTEM_WORD_IDS" }, 400);
+      throw new AppError("INVALID_SYSTEM_WORD_IDS");
     }
 
-    try {
-      const results = await wordService.copySystemWordsToUserWordbook(
-        wordbookId,
-        systemWordIds,
-      );
-      return c.json(results, 201);
-    } catch (error: any) {
-      if (error.message === "SYSTEM_WORD_NOT_FOUND") {
-        return c.json({ error: error.message }, 404);
-      }
-      return c.json({ error: error.message }, 500);
-    }
+    const results = await wordService.copySystemWordsToUserWordbook(
+      wordbookId,
+      systemWordIds,
+    );
+    return c.json(results, 201);
   },
 );
 
@@ -183,48 +164,39 @@ wordbookController.post("/:wordbookId/words/user", requireAuth, async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "INVALID_JSON" }, 400);
+    throw new AppError("INVALID_JSON");
   }
 
   const { enText, meanings } = body;
 
   // ===== 기본 검증 =====
 
-  if (!wordbookId || typeof wordbookId !== "string") {
-    return c.json({ error: "INVALID_WORDBOOK_ID" }, 400);
+  if (!isUuid(wordbookId)) {
+    throw new AppError("INVALID_WORDBOOK_ID");
   }
-  if (!enText || typeof enText !== "string" || enText.trim().length === 0) {
-    return c.json({ error: "INVALID_EN_TEXT" }, 400);
+  if (!isNonEmptyString(enText)) {
+    throw new AppError("INVALID_EN_TEXT");
   }
-  if (!Array.isArray(meanings) || meanings.length === 0) {
-    return c.json({ error: "INVALID_MEANINGS_ARRAY" }, 400);
+  if (!Array.isArray(meanings)) {
+    throw new AppError("INVALID_MEANINGS_TYPE");
   }
-
-  for (const m of meanings) {
-    if (
-      !m ||
-      typeof m.partOfSpeech !== "string" ||
-      typeof m.meaning !== "string" ||
-      m.meaning.trim().length === 0
-    ) {
-      return c.json({ error: "INVALID_MEANING_ITEM" }, 400);
-    }
+  if (meanings.length === 0) {
+    throw new AppError("EMPTY_MEANINGS");
+  }
+  if (meanings.some((m) => !isValidMeaningInput(m))) {
+    throw new AppError("INVALID_MEANING_ITEM");
   }
 
-  try {
-    const result = await wordService.createUserWordWithMeanings(
-      wordbookId,
-      enText.trim(),
-      meanings.map((m) => ({
-        partOfSpeech: m.partOfSpeech,
-        meaning: m.meaning.trim(),
-      })),
-    );
+  const result = await wordService.createUserWordWithMeanings(
+    wordbookId,
+    enText.trim(),
+    meanings.map((m) => ({
+      partOfSpeech: m.partOfSpeech,
+      meaning: m.meaning.trim(),
+    })),
+  );
 
-    return c.json(result, 201);
-  } catch (error: any) {
-    return c.json({ error: error.message }, 500);
-  }
+  return c.json(result, 201);
 });
 
 /**
@@ -244,7 +216,7 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "INVALID_JSON" }, 400);
+    throw new AppError("INVALID_JSON");
   }
 
   const { wordId, enText, meanings } = body;
@@ -253,56 +225,52 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
 
   // 1. wordId, wordbookId 검증
   if (!isUuid(wordId)) {
-    return c.json({ error: "INVALID_WORD_ID" }, 400);
+    throw new AppError("INVALID_WORD_ID");
   }
   if (!isUuid(wordbookId)) {
-    return c.json({ error: "INVALID_WORDBOOK_ID" }, 400);
+    throw new AppError("INVALID_WORDBOOK_ID");
   }
 
   // 2. 수정할 값이 하나도 없는 경우 차단
   if (enText === undefined && meanings === undefined) {
-    return c.json({ error: "EMPTY_PATCH_BODY" }, 400);
+    throw new AppError("EMPTY_PATCH_BODY");
   }
 
   // 3. enText 검증
   if (enText !== undefined && !isNonEmptyString(enText)) {
-    return c.json({ error: "INVALID_EN_TEXT" }, 400);
+    throw new AppError("INVALID_EN_TEXT");
   }
 
   // 4. meanings 검증
   if (meanings !== undefined) {
     if (!Array.isArray(meanings)) {
-      return c.json({ error: "INVALID_MEANINGS_TYPE" }, 400);
+      throw new AppError("INVALID_MEANINGS_TYPE");
     }
 
     const hasInvalidMeaning = meanings.some((item) =>
       !isValidMeaningInput(item)
     );
     if (hasInvalidMeaning) {
-      return c.json({ error: "INVALID_MEANINGS_ITEM" }, 400);
+      throw new AppError("INVALID_MEANING_ITEM");
     }
   }
 
-  try {
-    if (enText !== undefined) {
-      await wordService.updateUserWord(
-        wordbookId,
-        wordId,
-        enText.trim(),
-      );
-    }
-    if (meanings !== undefined) {
-      await wordService.updateUserMeanings(
-        wordId,
-        meanings,
-      );
-    }
-    const result = await wordService.getUserWordWithMeanings(wordId);
-
-    return c.json(result, 200);
-  } catch (error: any) {
-    return c.json({ error: error.message ?? "INTERNAL_SERVER_ERROR" }, 500);
+  if (enText !== undefined) {
+    await wordService.updateUserWord(
+      wordbookId,
+      wordId,
+      enText.trim(),
+    );
   }
+  if (meanings !== undefined) {
+    await wordService.updateUserMeanings(
+      wordId,
+      meanings,
+    );
+  }
+  const result = await wordService.getUserWordWithMeanings(wordId);
+
+  return c.json(result, 200);
 });
 
 /*
@@ -320,32 +288,22 @@ wordbookController.delete("/:wordbookId/words/user", requireAuth, async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json({ error: "INVALID_JSON" }, 400);
+    throw new AppError("INVALID_JSON");
   }
 
   const { wordId } = body;
 
   // ===== 기본 검증 =====
 
-  // wordId, wordbookId 검증
   if (!isUuid(wordId)) {
-    return c.json({ error: "INVALID_WORD_ID" }, 400);
+    throw new AppError("INVALID_WORD_ID");
   }
   if (!isUuid(wordbookId)) {
-    return c.json({ error: "INVALID_WORDBOOK_ID" }, 400);
+    throw new AppError("INVALID_WORDBOOK_ID");
   }
 
-  try {
-    await wordService.deleteUserWordWithMeanings(wordId, wordbookId);
-    return c.body(null, 204);
-  } catch (error: any) {
-    // TODO: 논의 - 커스텀 에러 클래스
-    console.error("delete error:", error);
-    if (error.message === "USER_WORD_NOT_FOUND") {
-      return c.json({ error: error.message }, 404);
-    }
-    return c.json({ error: error.message ?? "INTERNAL_SERVER_ERROR" }, 500);
-  }
+  await wordService.deleteUserWordWithMeanings(wordId, wordbookId);
+  return c.body(null, 204);
 });
 
 /*
@@ -366,31 +324,27 @@ wordbookController.delete(
     try {
       body = await c.req.json();
     } catch {
-      return c.json({ error: "INVALID_JSON" }, 400);
+      throw new AppError("INVALID_JSON");
     }
 
     const { wordIds: userWordIds } = body;
 
     if (!isUuid(wordbookId)) {
-      return c.json({ error: "INVALID_ID_FORMAT" }, 400);
+      throw new AppError("INVALID_WORDBOOK_ID");
     }
     if (
       !Array.isArray(userWordIds) ||
       userWordIds.length === 0 ||
       userWordIds.some((id) => !isUuid(id))
     ) {
-      return c.json({ error: "INVALID_USER_WORD_IDS" }, 400);
+      throw new AppError("INVALID_USER_WORD_IDS");
     }
 
-    try {
-      const deletedWordIds = await wordService.deleteUserWordsWithMeanings(
-        userWordIds,
-        wordbookId,
-      );
-      return c.json({ wordIds: deletedWordIds }, 200);
-    } catch (error: any) {
-      return c.json({ error: error.message ?? "INTERNAL_SERVER_ERROR" }, 500);
-    }
+    const deletedWordIds = await wordService.deleteUserWordsWithMeanings(
+      userWordIds,
+      wordbookId,
+    );
+    return c.json({ wordIds: deletedWordIds }, 200);
   },
 );
 
@@ -399,17 +353,14 @@ wordbookController.delete(
   # /wordbooks/:id
   # 사용자 단어장 삭제
 */
-
 wordbookController.delete("/:wordbookId", requireAuth, async (c) => {
   const userId = (c as any).get("userId") as string;
   const wordbookId = c.req.param("wordbookId");
 
-  try {
-    await wordbookService.deleteUserWordbook(userId, wordbookId);
-    return c.json("ok");
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      return c.json({ error: error.message }, 500);
-    } else return c.json({ error: "알 수 없는 오류가 발생했습니다." }, 500);
+  if (!isUuid(wordbookId)) {
+    throw new AppError("INVALID_WORDBOOK_ID");
   }
+
+  await wordbookService.deleteUserWordbook(userId, wordbookId);
+  return c.json("ok");
 });
