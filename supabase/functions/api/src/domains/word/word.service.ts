@@ -1,4 +1,5 @@
 import * as wordRepo from "./word.repository.ts";
+import { AppError } from "@/shared/errors/app-error.ts";
 import {
   MeaningDTO,
   MeaningInput,
@@ -69,14 +70,19 @@ const copyOneSystemWord = async (
 ): Promise<WordDTO | null> => {
   // 시스템 단어 정보 조회
   const systemWordData = await wordRepo.getSystemWord(systemWordId);
-  if (!systemWordData) throw new Error("SYSTEM_WORD_NOT_FOUND");
+  if (!systemWordData) throw new AppError("SYSTEM_WORD_NOT_FOUND");
 
   // 단어장에 이미 있는 단어(en_text 기준)는 건너뜀
   const key = normalizeEnText(systemWordData.en_text);
   if (seen.has(key)) return null;
 
+  // 정책상 시스템 단어는 뜻이 하나 이상 있어야 한다. 0건은 데이터 오류다
   const systemMeaningsData = await wordRepo.getSystemMeanings(systemWordId);
-  if (!systemMeaningsData) throw new Error("SYSTEM_WORD_MEANINGS_NOT_FOUND");
+  if (systemMeaningsData.length === 0) {
+    throw new AppError("SYSTEM_WORD_MEANINGS_MISSING", {
+      cause: new Error(`시스템 단어(${systemWordId})에 뜻이 없습니다`),
+    });
+  }
 
   // 입력값 세팅
   const meaningInput: MeaningInput[] = systemMeaningsData.map((m) => {
@@ -108,7 +114,7 @@ export const copySystemWordToUserWordbook = async (
   const seen = new Set(existingEnTexts.map(normalizeEnText));
 
   const result = await copyOneSystemWord(wordbookId, systemWordId, seen);
-  if (!result) throw new Error("DUPLICATE_WORD");
+  if (!result) throw new AppError("DUPLICATE_WORD");
   return result;
 };
 
@@ -137,6 +143,8 @@ export const getUserWordWithMeanings = async (
   wordId: string,
 ): Promise<WordDTO> => {
   const userWord = await wordRepo.getUserWord(wordId);
+  if (!userWord) throw new AppError("USER_WORD_NOT_FOUND");
+
   const userMeanings = await wordRepo.getUserMeanings(wordId);
 
   return mapUserWordRowsToWordDTO(userWord, userMeanings);
@@ -150,6 +158,7 @@ export const updateUserWord = async (
 ): Promise<WordDTO> => {
   // 영어 수정 시 update (cascade 방지)
   const userWord = await wordRepo.updateUserWord(wordId, wordbookId, enText);
+  if (!userWord) throw new AppError("USER_WORD_NOT_FOUND");
 
   const userMeanings = await wordRepo.getUserMeanings(wordId);
 
@@ -184,7 +193,7 @@ export const deleteUserWordWithMeanings = async (
   const deletedWord = await deleteOneUserWord(wordId, wordbookId);
 
   if (!deletedWord) {
-    throw new Error("USER_WORD_NOT_FOUND");
+    throw new AppError("USER_WORD_NOT_FOUND");
   }
 
   return deletedWord.id;

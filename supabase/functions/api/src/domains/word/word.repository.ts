@@ -1,4 +1,5 @@
 import { supabase } from "../../utils/supabase.ts";
+import { toAppError } from "@/shared/errors/db-error.ts";
 import {
   MeaningInput,
   SystemMeaningRow,
@@ -11,6 +12,7 @@ export const createUserWord = async (
   wordbookId: string,
   enText: string,
 ): Promise<UserWordRow> => {
+  // INSERT ... RETURNING이라 0건이 구조적으로 불가능하다
   const { data, error } = await supabase
     .from("user_word")
     .insert({
@@ -20,7 +22,7 @@ export const createUserWord = async (
     .select()
     .single<UserWordRow>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
   return data;
 };
 
@@ -41,7 +43,7 @@ export const createUserMeanings = async (
     .order("order_index", { ascending: true })
     .overrideTypes<UserMeaningRow[], { merge: false }>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
   return data;
 };
 
@@ -51,14 +53,15 @@ export const createUserMeanings = async (
  */
 export const getUserWord = async (
   wordId: string,
-): Promise<UserWordRow> => {
+): Promise<UserWordRow | null> => {
+  // wordId가 존재하지 않을 수 있으므로 0건이 나올 수 있다. 판단은 서비스가 한다
   const { data, error } = await supabase
     .from("user_word")
     .select()
     .eq("id", wordId)
-    .single<UserWordRow>();
+    .maybeSingle<UserWordRow>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
   return data;
 };
 
@@ -72,7 +75,7 @@ export const getUserMeanings = async (
     .order("order_index", { ascending: true })
     .overrideTypes<UserMeaningRow[], { merge: false }>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
   return data;
 };
 
@@ -84,7 +87,7 @@ export const findUserWordEnTextsByWordbookId = async (
     .select("en_text")
     .eq("wordbook_id", wordbookId);
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
   return (data ?? []).map((row) => row.en_text as string);
 };
 
@@ -98,7 +101,7 @@ export const getSystemWord = async (
     .eq("id", wordId)
     .maybeSingle<SystemWordRow>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
   return data;
 };
 
@@ -112,7 +115,7 @@ export const getSystemMeanings = async (
     .order("order_index", { ascending: true })
     .overrideTypes<SystemMeaningRow[], { merge: false }>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
   return data;
 };
 
@@ -120,7 +123,8 @@ export const updateUserWord = async (
   wordId: string,
   wordbookId: string,
   enText: string,
-): Promise<UserWordRow> => {
+): Promise<UserWordRow | null> => {
+  // wordId, wordbookId 조합이 일치하지 않으면 0건이 나올 수 있다. 판단은 서비스가 한다
   const { data, error } = await supabase
     .from("user_word")
     .update({
@@ -129,9 +133,9 @@ export const updateUserWord = async (
     .eq("id", wordId)
     .eq("wordbook_id", wordbookId)
     .select()
-    .single<UserWordRow>();
+    .maybeSingle<UserWordRow>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
   return data;
 };
 
@@ -150,7 +154,7 @@ export const deleteUserWordWithMeanings = async (
 
   // cascade로 meanings도 삭제됨
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
   return data;
 };
 
@@ -162,5 +166,5 @@ export const deleteUserMeanings = async (
     .delete()
     .eq("word_id", wordId);
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
 };
