@@ -1,4 +1,5 @@
 import { supabase } from "@/utils/supabase.ts";
+import { toAppError } from "@/shared/errors/db-error.ts";
 import {
   SystemWordbookItemRow,
   UserWordbookItemRow,
@@ -18,7 +19,7 @@ export const findUserWordbooks = async (
     .order("created_at", { ascending: true })
     .overrideTypes<WordbookRow[], { merge: false }>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
 
   return data;
 };
@@ -48,7 +49,7 @@ export const findSystemWordsByWordbookId = async (
       ascending: true,
     });
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
 
   // 에러 없이 깔끔하게 가공하기
   return (data || []).map((row) => {
@@ -100,7 +101,7 @@ export const findUserWordByWordbookId = async (
       ascending: true,
     });
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
 
   return (data || []).map((row) => ({
     source: "USER",
@@ -118,18 +119,19 @@ export const findUserWordByWordbookId = async (
 
 export const getSourceByWordbookId = async (
   wordbookId: string,
-): Promise<WordSource> => {
+): Promise<WordSource | null> => {
+  // wordbookId가 존재하지 않을 수 있으므로 0건이 나올 수 있다. 판단은 서비스가 한다
   const { data, error } = await supabase
     .from("wordbook")
     .select(`
       type
       `)
     .eq("id", wordbookId)
-    .single<{ type: WordSource }>();
+    .maybeSingle<{ type: WordSource }>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
 
-  return data.type;
+  return data?.type ?? null;
 };
 
 export const createWordbook = async (
@@ -149,17 +151,17 @@ export const createWordbook = async (
     .select()
     .single<WordbookRow>();
 
-  if (error) throw error;
+  if (error) throw toAppError(error);
 
   return data;
 };
 
-// 사용자 단어장 삭제
+// 사용자 단어장 삭제. 없거나 소유자가 아니면 0건이 나올 수 있다.
+// 0건을 NOT_FOUND로 볼지는 서비스가 판단하므로 여기서는 삭제된 id만 반환한다
 export const deleteUserWordbook = async (
   userId: string,
   wordbookId: string,
-) => {
-  console.log("[params] ", wordbookId, userId);
+): Promise<string[]> => {
   const { data, error } = await supabase
     .from("wordbook")
     .delete()
@@ -168,24 +170,7 @@ export const deleteUserWordbook = async (
     .eq("type", "USER")
     .select("id");
 
-  // 삭제 실패 했을 때
-  if (error) {
-    console.error(
-      "[repo] query 수행 도중 error 가 발생했습니다",
-      error.message,
-    );
-    throw new Error(error.message);
-  }
+  if (error) throw toAppError(error);
 
-  // 삭제된 row 가 없을 때
-  if (!data || data.length === 0) {
-    console.error("[repo] delete query 수행 결과가 없습니다.");
-    throw new Error("Wordbook not found or not authorized");
-  }
-
-  return true;
+  return (data ?? []).map((row) => row.id as string);
 };
-
-function async() {
-  throw new Error("Function not implemented.");
-}
