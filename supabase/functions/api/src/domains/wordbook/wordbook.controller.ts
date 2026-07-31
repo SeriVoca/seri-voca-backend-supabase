@@ -257,20 +257,16 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
     }
   }
 
-  if (enText !== undefined) {
-    await wordService.updateUserWord(
-      wordbookId,
-      wordId,
-      enText.trim(),
-    );
-  }
-  if (meanings !== undefined) {
-    await wordService.updateUserMeanings(
-      wordId,
-      normalizeMeaningInputs(meanings),
-    );
-  }
-  const result = await wordService.getUserWordWithMeanings(wordId);
+  const result = await wordService.updateUserWordWithMeanings(
+    wordbookId,
+    wordId,
+    {
+      enText: enText !== undefined ? enText.trim() : undefined,
+      meanings: meanings !== undefined
+        ? normalizeMeaningInputs(meanings)
+        : undefined,
+    },
+  );
 
   return c.json(result, 200);
 });
