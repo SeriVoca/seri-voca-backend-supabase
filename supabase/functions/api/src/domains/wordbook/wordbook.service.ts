@@ -113,7 +113,7 @@ export const getWordsInWordbook = async (
   wordbook_id: string,
 ): Promise<WordDTO[]> => {
   const source = await wordbookRepo.getSourceByWordbookId(wordbook_id);
-  if (!source) throw new AppError("WORDBOOK_NOT_FOUND");
+  if (source === null) throw new AppError("WORDBOOK_NOT_FOUND");
 
   if (source === "SYSTEM") {
     const words = await wordbookRepo.findSystemWordsByWordbookId(wordbook_id);
