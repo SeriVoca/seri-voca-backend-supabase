@@ -10,6 +10,7 @@ import {
   isValidMeaningInput,
   normalizeMeaningInputs,
 } from "../../utils/validators.ts";
+import { parseJsonBody } from "../../utils/request.ts";
 
 export const wordbookController = new Hono();
 
@@ -51,12 +52,9 @@ wordbookController.get("/:id", async (c) => {
 wordbookController.post("/", requireAuth, async (c) => {
   const user_id = (c as any).get("userId") as string;
 
-  let body: { title: string; description: string | null };
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new AppError("INVALID_JSON");
-  }
+  const body = await parseJsonBody<
+    { title: string; description: string | null }
+  >(c);
 
   const title = body.title?.trim();
   const description = body.description ?? null;
@@ -81,15 +79,7 @@ wordbookController.post("/", requireAuth, async (c) => {
 wordbookController.post("/:wordbookId/words/system", requireAuth, async (c) => {
   const wordbookId = c.req.param("wordbookId");
 
-  let body: {
-    systemWordId: string;
-  };
-
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new AppError("INVALID_JSON");
-  }
+  const body = await parseJsonBody<{ systemWordId: string }>(c);
 
   const { systemWordId } = body;
 
@@ -118,15 +108,7 @@ wordbookController.post(
   async (c) => {
     const wordbookId = c.req.param("wordbookId");
 
-    let body: {
-      systemWordIds: string[];
-    };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      throw new AppError("INVALID_JSON");
-    }
+    const body = await parseJsonBody<{ systemWordIds: string[] }>(c);
 
     const { systemWordIds } = body;
 
@@ -157,16 +139,10 @@ wordbookController.post(
 wordbookController.post("/:wordbookId/words/user", requireAuth, async (c) => {
   const wordbookId = c.req.param("wordbookId");
 
-  let body: {
+  const body = await parseJsonBody<{
     enText: string;
     meanings: MeaningInput[];
-  };
-
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new AppError("INVALID_JSON");
-  }
+  }>(c);
 
   const { enText, meanings } = body;
 
@@ -205,17 +181,11 @@ wordbookController.post("/:wordbookId/words/user", requireAuth, async (c) => {
 wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
   const wordbookId = c.req.param("wordbookId");
 
-  let body: {
+  const body = await parseJsonBody<{
     wordId: string;
     enText?: string;
     meanings?: MeaningInput[];
-  };
-
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new AppError("INVALID_JSON");
-  }
+  }>(c);
 
   const { wordId, enText, meanings } = body;
 
@@ -279,15 +249,7 @@ wordbookController.patch("/:wordbookId/words/user", requireAuth, async (c) => {
 wordbookController.delete("/:wordbookId/words/user", requireAuth, async (c) => {
   const wordbookId = c.req.param("wordbookId");
 
-  let body: {
-    wordId: string;
-  };
-
-  try {
-    body = await c.req.json();
-  } catch {
-    throw new AppError("INVALID_JSON");
-  }
+  const body = await parseJsonBody<{ wordId: string }>(c);
 
   const { wordId } = body;
 
@@ -315,15 +277,7 @@ wordbookController.delete(
   async (c) => {
     const wordbookId = c.req.param("wordbookId");
 
-    let body: {
-      wordIds: string[];
-    };
-
-    try {
-      body = await c.req.json();
-    } catch {
-      throw new AppError("INVALID_JSON");
-    }
+    const body = await parseJsonBody<{ wordIds: string[] }>(c);
 
     const { wordIds: userWordIds } = body;
 
