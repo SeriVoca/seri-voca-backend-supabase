@@ -12,17 +12,13 @@
   somethingController.method("/params", requireAuth, async (c) => {
     const userId = (c as any).get("userId") as string;
 
-    // payload 처리. JSON 파싱 실패는 여기서만 catch한다
-    let body: SomethingPayload;
-    try {
-      body = await c.req.json();
-    } catch {
-      throw new AppError("INVALID_JSON");
-    }
+    // payload 처리. 파싱 실패와 객체가 아닌 본문(null / 스칼라)을
+    // parseJsonBody가 INVALID_JSON으로 막는다. 직접 c.req.json()을 부르지 않는다
+    const body = await parseJsonBody<SomethingPayload>(c);
 
-    // payload 추출
-    const a = body?.a;
-    const b = body?.b ?? null;
+    // payload 추출. 위에서 객체임이 보장되므로 body?.a로 감싸지 않는다
+    const a = body.a;
+    const b = body.b ?? null;
 
     // payload 무결성 검증. 실패 사유별로 다른 코드를 던진다
     if (!isUuid(a)) throw new AppError("INVALID_SOMETHING_ID");
