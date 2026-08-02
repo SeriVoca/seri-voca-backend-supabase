@@ -1,4 +1,5 @@
 import * as wordbookRepo from "../wordbook/wordbook.repository.ts";
+import { AppError } from "@/shared/errors/app-error.ts";
 import {
   SystemWordbookItemRow,
   UserWordbookItemRow,
@@ -112,6 +113,7 @@ export const getWordsInWordbook = async (
   wordbook_id: string,
 ): Promise<WordDTO[]> => {
   const source = await wordbookRepo.getSourceByWordbookId(wordbook_id);
+  if (source === null) throw new AppError("WORDBOOK_NOT_FOUND");
 
   if (source === "SYSTEM") {
     const words = await wordbookRepo.findSystemWordsByWordbookId(wordbook_id);
@@ -128,7 +130,12 @@ export const getWordsInWordbook = async (
         UserWordbookMapper.toDTO(domain!)
       );
   } else {
-    throw new Error("올바르지 않은 단어장 유형입니다.");
+    // type이 SYSTEM/USER 외의 값인 경우. 스키마상 있어선 안 되는 데이터 오류다
+    throw new AppError("WORDBOOK_TYPE_MISCONFIGURED", {
+      cause: new Error(
+        `단어장(${wordbook_id})의 type이 올바르지 않습니다: ${source}`,
+      ),
+    });
   }
 };
 
@@ -153,9 +160,6 @@ export const deleteUserWordbook = async (
   userId: string,
   wordbookId: string,
 ): Promise<void> => {
-  try {
-    await wordbookRepo.deleteUserWordbook(userId, wordbookId);
-  } catch (error: unknown) {
-    throw error;
-  }
+  const deletedIds = await wordbookRepo.deleteUserWordbook(userId, wordbookId);
+  if (deletedIds.length === 0) throw new AppError("WORDBOOK_NOT_FOUND");
 };

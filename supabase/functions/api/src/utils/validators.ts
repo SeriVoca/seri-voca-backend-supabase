@@ -31,13 +31,21 @@ export const isValidMeaningInput = (
     return false;
   }
 
-  if (
-    v.partOfSpeech !== undefined &&
-    v.partOfSpeech !== null &&
-    !isValidPartOfSpeech(v.partOfSpeech)
-  ) {
+  // part_of_speech는 NOT NULL이므로 누락을 허용하면 DB에서 500으로 터진다.
+  // MeaningInput의 partOfSpeech도 필수 필드라 여기서 걸러야 타입 가드가 성립한다
+  if (!isValidPartOfSpeech(v.partOfSpeech)) {
     return false;
   }
 
   return true;
 };
+
+// 저장 전 정규화. isValidMeaningInput이 trim한 값으로 검증하므로
+// 저장도 같은 값으로 해야 검증한 것과 저장한 것이 어긋나지 않는다
+export const normalizeMeaningInputs = (
+  meanings: MeaningInput[],
+): MeaningInput[] =>
+  meanings.map((m) => ({
+    partOfSpeech: m.partOfSpeech,
+    meaning: m.meaning.trim(),
+  }));

@@ -37,4 +37,9 @@ export const WORD_ERROR_CODES = {
   },
   // 409
   DUPLICATE_WORD: { status: 409, message: "이미 단어장에 있는 단어입니다." },
+  // 500 - 시스템 단어는 뜻이 하나 이상 있어야 하는데 없는 경우 (데이터 오류)
+  SYSTEM_WORD_MEANINGS_MISSING: {
+    status: 500,
+    message: "서버 오류가 발생했습니다.",
+  },
 } as const satisfies ErrorCodeMap;
