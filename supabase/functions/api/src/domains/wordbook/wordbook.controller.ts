@@ -33,7 +33,7 @@ wordbookController.get("/user", requireAuth, async (c) => {
   # /wordbooks/:id
   # 단어장 id로 단어 조회
 */
-wordbookController.get("/:id", async (c) => {
+wordbookController.get("/:id", requireAuth, async (c) => {
   const wordbook_id = c.req.param("id");
 
   if (!isUuid(wordbook_id)) {

@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import * as curriculumService from "./curriculum.service.ts";
+import { requireAuth } from "../../auth/auth.service.ts";
 
 export const curriculumController = new Hono();
 
@@ -10,7 +11,7 @@ export const curriculumController = new Hono();
 */
 
 // 에러는 throw만 하고 index.ts의 onError가 응답으로 변환한다
-curriculumController.get("/default", async (c) => {
+curriculumController.get("/default", requireAuth, async (c) => {
   const result = await curriculumService.getDefaultWordbooks();
   return c.json(result);
 });
